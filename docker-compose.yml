@@ -101,7 +101,7 @@ services:
     ports:
       - "8888:8888"
     volumes:
-      - ./:/opt/spark-jobs
+      - ./spark/:/opt/spark-jobs
     working_dir: /opt/spark-jobs
     networks:
       - kafka-net
