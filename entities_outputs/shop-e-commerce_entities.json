@@ -1,0 +1,22 @@
+{
+  "languages": [
+    "python"
+  ],
+  "frameworks": [
+    "django"
+  ],
+  "tools": [
+    "docker",
+    "git"
+  ],
+  "features": [],
+  "domain": [
+    "chat",
+    "e commerce"
+  ],
+  "security": [
+    "HTTPS"
+  ],
+  "database": [],
+  "repository": "shop-e-commerce"
+}

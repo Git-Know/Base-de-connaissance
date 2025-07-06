@@ -1,0 +1,22 @@
+{
+  "languages": [
+    "typescript"
+  ],
+  "frameworks": [
+    "express",
+    "react"
+  ],
+  "tools": [
+    "docker",
+    "git"
+  ],
+  "features": [],
+  "domain": [],
+  "security": [
+    "HTTPS"
+  ],
+  "database": [
+    "graphql"
+  ],
+  "repository": "evershop"
+}

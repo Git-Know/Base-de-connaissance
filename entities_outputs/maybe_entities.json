@@ -1,0 +1,23 @@
+{
+  "languages": [
+    "ruby"
+  ],
+  "frameworks": [],
+  "tools": [
+    "docker",
+    "git"
+  ],
+  "features": [
+    "dashboard"
+  ],
+  "domain": [
+    "finance"
+  ],
+  "security": [
+    "HTTPS"
+  ],
+  "database": [
+    "postgresql"
+  ],
+  "repository": "maybe"
+}

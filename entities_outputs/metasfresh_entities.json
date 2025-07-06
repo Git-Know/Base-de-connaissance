@@ -1,0 +1,23 @@
+{
+  "languages": [],
+  "frameworks": [
+    "react"
+  ],
+  "tools": [
+    "docker",
+    "erp",
+    "git"
+  ],
+  "features": [
+    "dashboard",
+    "download",
+    "rest api",
+    "search"
+  ],
+  "domain": [],
+  "security": [
+    "HTTPS"
+  ],
+  "database": [],
+  "repository": "metasfresh"
+}
