@@ -9,14 +9,14 @@ PRODUCER_SCRIPT = "producer.py"
 KAFKA_TIMEOUT = 60  # secondes
 
 
-def start_docker():
-    print("🛠️  Démarrage des services Docker...")
-    try:
-        subprocess.run(DOCKER_COMPOSE_CMD, check=True)
-        print("✅ Docker Compose lancé avec succès.")
-    except subprocess.CalledProcessError as e:
-        print(f"❌ Erreur lors du démarrage Docker Compose : {e}")
-        sys.exit(1)
+# def start_docker():
+#     print("🛠️  Démarrage des services Docker...")
+#     try:
+#         subprocess.run(DOCKER_COMPOSE_CMD, check=True)
+#         print("✅ Docker Compose lancé avec succès.")
+#     except subprocess.CalledProcessError as e:
+#         print(f"❌ Erreur lors du démarrage Docker Compose : {e}")
+#         sys.exit(1)
 
 
 def wait_for_kafka(timeout=KAFKA_TIMEOUT):
@@ -45,6 +45,6 @@ def run_producer_script():
 
 
 if __name__ == "__main__":
-    start_docker()
+    # start_docker()
     wait_for_kafka()
     run_producer_script()

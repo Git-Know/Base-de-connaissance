@@ -1,1 +1,5 @@
 venv/
+output/
+*.log
+*.env
+.ipynb_checkpoints/
