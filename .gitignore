@@ -1,1 +1,21 @@
+# Environnement virtuel Python
 venv/
+.env
+
+# Cache Python
+__pycache__/
+*.pyc
+*.pyo
+*.pyd
+
+# Dossiers de sortie / résultats
+output/
+entities_outputs/
+
+# Fichiers temporaires ou de log
+*.log
+*.tmp
+
+# Fichiers IDE (optionnel si tu utilises VSCode, PyCharm, etc.)
+.vscode/
+.idea/

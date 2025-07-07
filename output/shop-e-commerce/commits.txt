@@ -1,0 +1,118 @@
+25f78cfe370109b9885b903e503faac295c7b7f2 - Bump shuup-mirage-field to 2.2.0
+Christian Hess - 2021-08-18T22:32:03Z
+
+546a5666f400e855f3f0b7a12ad4cabc4b201cf4 - Bump django-mirage-field
+Christian Hess - 2021-08-18T19:37:32Z
+
+8aaa23ac9a0732ca4da310865b7fc767041c5ba3 - Merge pull request #2597 from chessbr/fix-typo
+
+Admin: fix typo in product cloner
+Christian Hess - 2021-08-18T12:24:50Z
+
+9cfc9a957475c8139507b024fc8184e5bc194571 - Admin: fix typo in product cloner
+Christian Hess - 2021-08-17T18:28:47Z
+
+3cfdac7d0d3d40c7b770b97a833a8c94cd97d0b6 - Post-release update
+Christian Hess - 2021-08-17T13:28:21Z
+
+9231bf2d022b22aad5e53e144d330667eb086b7b - Release 3.1.0
+Christian Hess - 2021-08-17T13:27:57Z
+
+55e72497536b1bcbadbd9044552c7c413e2a68f8 - Pull translations from Transifex
+Christian Hess - 2021-08-17T13:24:56Z
+
+7d1cf385fa879e95c30cf2fddc0e47bc76329797 - Fix code style
+Christian Hess - 2021-08-17T12:46:50Z
+
+6de53a8f3b3967e10e1997816a398df3ebb32755 - Core: fix reindex migration to active the default language
+Christian Hess - 2021-08-17T12:06:07Z
+
+5501603f947ec7d5fc9767d465cf95b463b2d572 - Merge pull request #2594 from bill-shuup/myyrkukka-bug
+
+Bug in Category.get_hierarchy
+Christian Hess - 2021-08-16T22:22:07Z
+
+510d2e77ec42eed2c8f92ee156852b07a6ed94eb - Core: fix bug in Category.get_hierarchy
+
+" / ".join(...) fails if any object in the list is None, so we filter those out.
+bill-shuup - 2021-08-16T17:32:34Z
+
+8b511ab350b26626fc66c5e350252c45329c36b0 - Merge pull request #2579 from bill-shuup/supplier-needs-supplier-module-to-ship
+
+Core: suppliers must have supplier modules to ship
+Christian Hess - 2021-08-16T22:18:49Z
+
+1ac96079433f6c667f3b99bc59bef789f031149f - Update changelog
+Christian Hess - 2021-08-16T21:11:36Z
+
+3a8c91d68c75990f5d91c97858ee46db41f3ee8e - Fix unit tests
+Christian Hess - 2021-08-16T21:04:24Z
+
+bd765b3858bf4c0bde2c480fe04a71d77343d725 - shuup core: Suppliers must have supplier modules to ship.
+
+Prevent suppliers with no supply modules from creating shipments.
+
+Reference: https://trello.com/c/YdNmeTJ0/99-fix-bug-that-makes-it-not-possible-to-create-shipments-in-shuup-os
+Bill Kronholm - 2021-08-05T22:31:10Z
+
+35de5631bbc0bebb35f759756d2e8b496cb99394 - Post-release update
+Christian Hess - 2021-08-16T17:48:25Z
+
+f555ac58bbe54d22cb806193b2543352031b8827 - Release 3.0.0
+Christian Hess - 2021-08-16T17:48:00Z
+
+4d15113c4353f0ec87d1b9656ff29d71600d585d - Update README and MANIFEST
+Christian Hess - 2021-08-16T17:47:41Z
+
+359ec416166b720a6980728a9f0749957680f42d - Merge pull request #2590 from bill-shuup/display-order
+
+ProductMedia
+Christian Hess - 2021-08-12T23:59:18Z
+
+3e380b0deba09da461ed893d24b043288f001f42 - ProductMedia
+
+Update verbose_name to be more intuitive to the user.
+bill-shuup - 2021-08-12T16:47:36Z
+
+491bf124159292ec97cdc378d743f79d489b470f - Fix code style issue
+Christian Hess - 2021-08-12T23:38:46Z
+
+35952225a97dfd4b772e1ca8999e99c92c9d841a - Post-release update
+Christian Hess - 2021-08-12T23:34:14Z
+
+cb16f35ecf3dd5399144f29935e4a9eb79264a01 - Release 3.0.0b3
+Christian Hess - 2021-08-12T23:33:43Z
+
+b11f9b3bdc8ebfdfd02850ecdcfc7227ea7f0ddf - Merge pull request #2589 from chessbr/order-shipped
+
+Core: change how orders are set to be fully shipped
+Christian Hess - 2021-08-12T23:29:55Z
+
+b58e6ef8d35ec4f58ed5f6bdee9b940386e34885 - Core: change how orders are set to be fully shipped
+
+Consider an order fully shipped only when all out shipments are sent
+
+Refs https://trello.com/c/AuDBi8O4/140-bug-shipping-is-set-to-fully-shipped-by-default-not-not-shipped
+Christian Hess - 2021-08-12T14:00:59Z
+
+6e6b46914186565489e95f78d0cd1c9eb7aed32c - Merge pull request #2570 from eberonsh/limitSalesUnitDecimals
+
+Do not let users to set value with decimals while adjusting stock qua…
+Christian Hess - 2021-08-12T23:23:50Z
+
+5dc18e348a95d79a4e2043d8f35804f4f7735f69 - Merge branch 'master' into limitSalesUnitDecimals
+Christian Hess - 2021-08-12T23:23:09Z
+
+5a054db7b760cc1e15ffb83d170616f908cc63c4 - Merge pull request #2588 from eberonsh/testEncypted
+
+Add tests for encrypted configuration item.
+Christian Hess - 2021-08-12T17:07:28Z
+
+7416b05a3d3272ad0c6402a4f37f0a522821f493 - Merge branch 'master' into testEncypted
+Christian Hess - 2021-08-12T17:06:39Z
+
+614de9e4d693519191d2354372f8917f92aff07e - Merge pull request #2575 from bill-shuup/protected-service-provider
+
+Core: protect service providers when deleting services
+Christian Hess - 2021-08-12T17:05:31Z
+

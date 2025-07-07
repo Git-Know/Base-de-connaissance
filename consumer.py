@@ -6,9 +6,7 @@ import os
 TOPIC_NAME = "github-readme"
 BOOTSTRAP_SERVERS = "localhost:9092"
 GROUP_ID = "readme-consumer-group"
-OUTPUT_DIR = "entities_outputs"
-
-os.makedirs(OUTPUT_DIR, exist_ok=True)
+BASE_OUTPUT_DIR = "output"  # correspond au dossier utilisé par producer.py
 
 consumer = KafkaConsumer(
     TOPIC_NAME,
@@ -33,10 +31,17 @@ for msg in consumer:
 
     cleaned = clean_text(raw_readme)
     result = extract_entities(cleaned)
-    result["repository"] = repo_name  # facultatif : pour rappel dans le JSON
+    result["repository"] = repo_name  # utile pour suivi dans le fichier JSON
 
-    # Nettoyer le nom de repo (au cas où il contient des caractères interdits)
+    # Nettoyage du nom du repo pour être sûr qu'il est compatible avec le nom de dossier
     safe_repo_name = repo_name.replace("/", "_").replace("\\", "_")
 
-    output_path = os.path.join(OUTPUT_DIR, f"{safe_repo_name}_entities.json")
+    # Création du dossier si nécessaire
+    repo_output_dir = os.path.join(BASE_OUTPUT_DIR, safe_repo_name)
+    os.makedirs(repo_output_dir, exist_ok=True)
+
+    # Générer le fichier d'entités dans le dossier du repo
+    output_path = os.path.join(repo_output_dir, "entities.json")
     save_json(result, output_path)
+
+    print(f"[✅] Entités extraites sauvegardées dans : {output_path}")

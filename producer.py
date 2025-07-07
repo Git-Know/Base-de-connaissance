@@ -2,15 +2,20 @@ import requests
 from kafka import KafkaProducer
 import json
 import logging
+import os
+import time
+from dotenv import load_dotenv
 
-# Configurer le logger
+load_dotenv()
+
+# Logger
 logging.basicConfig(
     level=logging.INFO,
     format='%(asctime)s - %(levelname)s - %(message)s'
 )
 logger = logging.getLogger(__name__)
 
-# Configuration Kafka
+# Kafka
 try:
     producer = KafkaProducer(
         bootstrap_servers='localhost:9092',
@@ -20,75 +25,117 @@ except Exception as e:
     logger.error(f"Erreur Kafka : {e}")
     raise
 
-KAFKA_TOPIC = "github-readme"
-# Paramètres GitHub
+KAFKA_TOPIC_README = "github-readme"
+KAFKA_TOPIC_COMMITS = "github-commits"
+KAFKA_TOPIC_CONTRIBUTORS = "github-contributors"
+
+# GitHub
 owner = "Git-Know"
-repo = "Base-de-connaissance"
-base_url = f"https://api.github.com/repos/{owner}/{repo}"
-commits_url = f"{base_url}/commits"
-readme_url = f"{base_url}/readme"
-contributors_url = f"{base_url}/contributors"
-contents_url = f"{base_url}/contents"
+base_api_url = f"https://api.github.com/orgs/{owner}/repos"
 
+GITHUB_TOKEN = os.getenv("GITHUB_TOKEN")
 
-def fetch_and_send_commits():
-    logger.info("📥 Récupération des commits GitHub")
+headers = {
+    "Authorization": f"token {GITHUB_TOKEN}",
+    "Accept": "application/vnd.github.v3+json"
+}
+
+def fetch_and_send_readme(repo_name):
+    logger.info(f"📄 README de {repo_name}")
+    url = f"https://api.github.com/repos/{owner}/{repo_name}/readme"
     try:
-        response = requests.get(commits_url, timeout=10)
+        response = requests.get(url, headers=headers, timeout=10)
+        if response.status_code == 200:
+            readme_data = response.json()
+            download_url = readme_data.get("download_url")
+            if download_url:
+                readme_content = requests.get(download_url).text
+
+                # Envoi dans Kafka
+                producer.send(KAFKA_TOPIC_README, {"content": readme_content, "repository": repo_name})
+
+                # Sauvegarde locale
+                os.makedirs(f"output/{repo_name}", exist_ok=True)
+                with open(f"output/{repo_name}/README.md", "w", encoding="utf-8") as f:
+                    f.write(readme_content)
+
+                logger.info(f"✅ README envoyé et enregistré pour {repo_name}")
+            else:
+                logger.warning(f"⚠️ Pas de download_url pour {repo_name}")
+        else:
+            logger.warning(f"⚠️ README introuvable pour {repo_name}")
+    except Exception as e:
+        logger.error(f"❌ Erreur README {repo_name} : {e}")
+
+
+def fetch_and_send_commits(repo_name):
+    logger.info(f"📥 Commits de {repo_name}")
+    url = f"https://api.github.com/repos/{owner}/{repo_name}/commits"
+    try:
+        response = requests.get(url, headers=headers, timeout=10)
         commits = response.json()
 
         if not isinstance(commits, list):
-            logger.error(f"❌ Réponse inattendue de l'API GitHub : {commits}")
+            logger.warning(f"⚠️ Pas de liste de commits reçue pour {repo_name}")
             return
 
+        os.makedirs(f"output/{repo_name}", exist_ok=True)
+        with open(f"output/{repo_name}/commits.txt", "w", encoding="utf-8") as f:
+            for commit in commits:
+                detail_url = commit.get("url")
+                if not detail_url:
+                    continue
+                detailed_commit = requests.get(detail_url, headers=headers).json()
+
+                # Envoi Kafka
+                producer.send(KAFKA_TOPIC_COMMITS, detailed_commit)
+
+                # Sauvegarde fichier
+                f.write(f"{detailed_commit['sha']} - {detailed_commit['commit']['message']}\n")
+                f.write(f"{detailed_commit['commit']['author']['name']} - {detailed_commit['commit']['author']['date']}\n\n")
+
+        logger.info(f"✅ Commits envoyés et enregistrés pour {repo_name}")
     except Exception as e:
-        logger.error(f"❌ Erreur récupération commits : {e}")
-        return
+        logger.error(f"❌ Erreur commits {repo_name} : {e}")
 
-    for commit in commits:
-        try:
-            if not isinstance(commit, dict):
-                logger.warning(f"⚠️ Commit ignoré (non dict): {commit}")
-                continue
 
-            detail_url = commit.get("url")
-            if not detail_url:
-                continue
-
-            detailed_commit = requests.get(detail_url, timeout=10).json()
-
-            # Envoi dans Kafka
-            producer.send('github-commits', detailed_commit)
-            sha = detailed_commit.get('sha', 'unknown')
-            logger.info(f"✔ Commit détaillé envoyé : {sha}")
-
-            # Ajout dans le fichier (en mode append)
-            with open('commits_envoyes.txt', 'a', encoding='utf-8') as f:
-                json.dump(detailed_commit, f, indent=2)
-                f.write("\n\n")
-
-        except Exception as e:
-            sha_fallback = commit.get('sha', 'unknown') if isinstance(commit, dict) else 'inconnu'
-            logger.error(f"❌ Erreur commit {sha_fallback} : {e}")
-
-    # Flush Kafka à la fin
+def fetch_and_send_contributors(repo_name):
+    logger.info(f"👥 Contributeurs de {repo_name}")
+    url = f"https://api.github.com/repos/{owner}/{repo_name}/contributors"
     try:
-        producer.flush()
-        logger.info("✅ Tous les commits ont été envoyés à Kafka")
+        response = requests.get(url, headers=headers, timeout=10)
+        contributors = response.json()
+
+        if not isinstance(contributors, list):
+            logger.warning(f"⚠️ Pas de contributeurs trouvés pour {repo_name}")
+            return
+
+        os.makedirs(f"output/{repo_name}", exist_ok=True)
+        with open(f"output/{repo_name}/contributors.txt", "w", encoding="utf-8") as f:
+            for c in contributors:
+                contrib_info = {
+                    "repository": repo_name,
+                    "login": c["login"],
+                    "contributions": c["contributions"]
+                }
+                f.write(f"{c['login']} - {c['contributions']} contributions\n")
+
+                # Envoi Kafka
+                producer.send(KAFKA_TOPIC_CONTRIBUTORS, contrib_info)
+
+        logger.info(f"✅ Contributeurs envoyés et enregistrés pour {repo_name}")
     except Exception as e:
-        logger.error(f"❌ Erreur lors du flush Kafka : {e}")
+        logger.error(f"❌ Erreur contributeurs {repo_name} : {e}")
 
 
-def fetch_readme():
-    logger.info(f"🔍 Récupération des dépôts de l'organisation : {owner}")
-    repos_url = f"https://api.github.com/orgs/{owner}/repos"
-    headers = {"Accept": "application/vnd.github.v3+json"}
-    
+def process_all_repos():
+    logger.info(f"🔍 Parcours des dépôts de l'organisation : {owner}")
     try:
-        repos = requests.get(repos_url, headers=headers, timeout=10).json()
+        response = requests.get(base_api_url, headers=headers, timeout=10)
+        repos = response.json()
 
         if not isinstance(repos, list):
-            logger.error("❌ Erreur : réponse inattendue de l'API GitHub.")
+            logger.error("❌ Réponse inattendue de l'API GitHub.")
             return
 
         for repo in repos:
@@ -96,52 +143,18 @@ def fetch_readme():
             if not repo_name:
                 continue
 
-            logger.info(f"📄 Récupération du README pour le repo : {repo_name}")
-            readme_url = f"https://api.github.com/repos/{owner}/{repo_name}/readme"
-
-            try:
-                resp = requests.get(readme_url, headers=headers, timeout=10)
-                if resp.status_code == 200:
-                    readme_data = resp.json()
-                    download_url = readme_data.get("download_url")
-                    if download_url:
-                        readme_content = requests.get(download_url).text
-
-                        # Envoi dans Kafka
-                        producer.send(KAFKA_TOPIC, {
-                            "content": readme_content,
-                            "repository": repo_name
-                        })
-                        logger.info(f"✅ README envoyé dans Kafka (repo: {repo_name})")
-                    else:
-                        logger.warning(f"⚠️ Pas de download_url pour {repo_name}")
-                else:
-                    logger.warning(f"⚠️ README non trouvé pour {repo_name} (code {resp.status_code})")
-
-            except Exception as e:
-                logger.error(f"❌ Erreur récupération README pour {repo_name} : {e}")
+            logger.info(f"\n{'='*40}\n🎯 Traitement du dépôt : {repo_name}")
+            fetch_and_send_readme(repo_name)
+            fetch_and_send_commits(repo_name)
+            fetch_and_send_contributors(repo_name)
+            time.sleep(1)  # Pause courte pour respecter le rate limit
 
         producer.flush()
+        logger.info("🚀 Traitement de tous les dépôts terminé")
 
     except Exception as e:
-        logger.error(f"❌ Erreur lors de la récupération des dépôts de l'organisation : {e}")
-
-
-def fetch_contributors():
-    logger.info("👥 Récupération des contributeurs")
-    try:
-        contributors = requests.get(contributors_url, timeout=10).json()
-        with open("contributors.txt", "w", encoding="utf-8") as f:
-            for c in contributors:
-                f.write(f"{c['login']} - {c['contributions']} contributions\n")
-        logger.info("✔ Contributeurs enregistrés.")
-    except Exception as e:
-        logger.error(f"Erreur contributeurs : {e}")
-
+        logger.error(f"❌ Erreur récupération des dépôts : {e}")
 
 
 if __name__ == "__main__":
-    fetch_and_send_commits()
-    fetch_readme()
-    fetch_contributors()
-
+    process_all_repos()

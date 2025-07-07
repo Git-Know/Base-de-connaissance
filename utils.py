@@ -8,7 +8,6 @@ nlp = spacy.load("en_core_web_md")
 LANGUAGES = {"python", "java", "javascript", "typescript", "c++", "c#", "php", "ruby"}
 FRAMEWORKS = {"django", "flask", "fastapi", "spring", "express", "react", "angular", "vue", "nestjs", "rails", "ionic"}
 TOOLS = {"docker", "kafka", "git", "kubernetes", "spark", "hadoop","erp"}
-
 FEATURES = {"authentication","scheduling", "dashboard", "search", "cart", "payment", "upload", "download", "rest api", "notification"}
 DOMAINS = {"e commerce", "nlp", "healthcare", "education", "finance", "chat", "iot", "machine learning"}
 SECURITY = {"jwt", "oauth2", "https", "rbac"}
@@ -30,7 +29,6 @@ def extract_entities(text, project_name=None):
     doc = nlp(text)
     text_lower = text.lower()
 
-    # spaCy NER et matching manuel (inchangé)
     spacy_entities = {(ent.text.strip().lower(), ent.label_) for ent in doc.ents}
     already_found = {e[0] for e in spacy_entities}
 
