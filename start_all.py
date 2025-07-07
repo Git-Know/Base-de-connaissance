@@ -9,7 +9,7 @@ DOCKER_COMPOSE_CMD = ["docker-compose", "up", "-d"]
 KAFKA_BOOTSTRAP_SERVERS = "localhost:9092"
 PRODUCER_SCRIPT = "producer.py"
 CONSUMER_SCRIPT = "consumer.py"
-KAFKA_TIMEOUT = 60  # secondes
+KAFKA_TIMEOUT = 60  
 
 
 def start_docker():
