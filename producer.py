@@ -93,7 +93,8 @@ def get_repo_data(repo_name):
                 'sha': commit['sha'],
                 'author': commit_detail['commit']['author']['name'],
                 'date': commit_detail['commit']['author']['date'],
-                'message': commit_detail['commit']['message']
+                'message': commit_detail['commit']['message'],  # includes multiline
+                'files': [file['filename'] for file in commit_detail.get('files', [])]
             })
             time.sleep(0.3)
 
@@ -140,14 +141,24 @@ def save_repo_files(repo_name, data):
         # 4. Fichier des commits
         with open(f'output/{repo_name}/commits.txt', 'w', encoding='utf-8') as f:
             f.write(f"Commits de {repo_name}\n")
-            f.write("="*50 + "\n")
+            f.write("=" * 50 + "\n")
             for commit in data['commits']:
                 f.write(f"ID: {commit['sha'][:7]}\n")
                 f.write(f"Auteur: {commit['author']}\n")
                 f.write(f"Date: {commit['date']}\n")
-                f.write(f"Message: {commit['message']}\n")
-                f.write("-"*50 + "\n")
-        
+                f.write("Message:\n")
+                f.write(commit['message'] + "\n")
+
+                # Write list of changed files
+                if 'files' in commit and commit['files']:
+                    f.write("Fichiers modifiés:\n")
+                    for file in commit['files']:
+                        f.write(f"  - {file}\n")
+                else:
+                    f.write("Fichiers modifiés: Aucun\n")
+
+                f.write("-" * 50 + "\n")
+
         logger.info(f"Fichiers sauvegardés pour {repo_name}")
     except Exception as e:
         logger.error(f"Erreur sauvegarde fichiers: {e}")
