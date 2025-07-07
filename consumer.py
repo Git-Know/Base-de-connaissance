@@ -1,6 +1,6 @@
 from kafka import KafkaConsumer
 import json
-from utils import clean_text, extract_entities, save_json
+from utils import clean_text, extract_entities, save_json, generate_summary
 import os
 
 TOPIC_NAME = "github-readme"
@@ -32,6 +32,10 @@ for msg in consumer:
     cleaned = clean_text(raw_readme)
     result = extract_entities(cleaned)
     result["repository"] = repo_name  # utile pour suivi dans le fichier JSON
+
+    # Générer résumé automatique
+    summary = generate_summary(result, project_name=repo_name)
+    result["summary"] = summary
 
     # Nettoyage du nom du repo pour être sûr qu'il est compatible avec le nom de dossier
     safe_repo_name = repo_name.replace("/", "_").replace("\\", "_")

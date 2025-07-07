@@ -19,5 +19,6 @@
     "HTTPS"
   ],
   "database": [],
-  "repository": "metasfresh"
+  "repository": "metasfresh",
+  "summary": "metasfresh is a project, offering features such as dashboard, download, rest api. It uses framework(s): react; tool(s): docker, erp, git. It integrates security mechanisms such as HTTPS."
 }

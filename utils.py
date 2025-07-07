@@ -7,11 +7,11 @@ nlp = spacy.load("en_core_web_md")
 
 LANGUAGES = {"python", "java", "javascript", "typescript", "c++", "c#", "php", "ruby"}
 FRAMEWORKS = {"django", "flask", "fastapi", "spring", "express", "react", "angular", "vue", "nestjs", "rails", "ionic"}
-TOOLS = {"docker", "kafka", "git", "kubernetes", "spark", "hadoop","erp"}
+TOOLS = {"docker", "kafka", "git", "kubernetes", "spark", "hadoop","erp","graphql"}
 FEATURES = {"authentication","scheduling", "dashboard", "search", "cart", "payment", "upload", "download", "rest api", "notification"}
 DOMAINS = {"e commerce", "nlp", "healthcare", "education", "finance", "chat", "iot", "machine learning"}
 SECURITY = {"jwt", "oauth2", "https", "rbac"}
-DATABASES = {"mysql", "postgresql", "mongodb", "sqlite", "firebase", "redis","graphql"}
+DATABASES = {"mysql", "postgresql", "mongodb", "sqlite", "firebase", "redis"}
 
 def clean_text(text):
     text = re.sub(r"[^\w\s]", " ", text) #supprime les ponctuations 
@@ -51,3 +51,40 @@ def extract_entities(text, project_name=None):
     }
 
     return result
+
+def generate_summary(entities, project_name="This project"):
+    summary = f"{project_name} is a project"
+
+    # Domain
+    if entities.get("domain"):
+        domains = ", ".join(entities["domain"])
+        summary += f" in the field of {domains}"
+
+    # Features
+    if entities.get("features"):
+        feats = ", ".join(entities["features"][:3])
+        summary += f", offering features such as {feats}"
+
+    # Technologies
+    tech_parts = []
+    if entities.get("languages"):
+        tech_parts.append("language(s): " + ", ".join(entities["languages"]))
+    if entities.get("frameworks"):
+        tech_parts.append("framework(s): " + ", ".join(entities["frameworks"]))
+    if entities.get("tools"):
+        tech_parts.append("tool(s): " + ", ".join(entities["tools"]))
+    if tech_parts:
+        summary += ". It uses " + "; ".join(tech_parts)
+
+    # Database
+    if entities.get("database"):
+        summary += f". It relies on databases such as {', '.join(entities['database'])}"
+
+    # Security
+    if entities.get("security"):
+        summary += f". It integrates security mechanisms such as {', '.join(entities['security'])}"
+
+    summary += "."
+
+    return summary
+

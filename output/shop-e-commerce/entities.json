@@ -18,5 +18,6 @@
     "HTTPS"
   ],
   "database": [],
-  "repository": "shop-e-commerce"
+  "repository": "shop-e-commerce",
+  "summary": "shop-e-commerce is a project in the field of chat, e commerce. It uses language(s): python; framework(s): django; tool(s): docker, git. It integrates security mechanisms such as HTTPS."
 }

@@ -19,5 +19,6 @@
   "database": [
     "postgresql"
   ],
-  "repository": "maybe"
+  "repository": "maybe",
+  "summary": "maybe is a project in the field of finance, offering features such as dashboard. It uses language(s): ruby; tool(s): docker, git. It relies on databases such as postgresql. It integrates security mechanisms such as HTTPS."
 }

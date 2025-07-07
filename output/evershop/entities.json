@@ -8,15 +8,15 @@
   ],
   "tools": [
     "docker",
-    "git"
+    "git",
+    "graphql"
   ],
   "features": [],
   "domain": [],
   "security": [
     "HTTPS"
   ],
-  "database": [
-    "graphql"
-  ],
-  "repository": "evershop"
+  "database": [],
+  "repository": "evershop",
+  "summary": "evershop is a project. It uses language(s): typescript; framework(s): express, react; tool(s): docker, git, graphql. It integrates security mechanisms such as HTTPS."
 }
