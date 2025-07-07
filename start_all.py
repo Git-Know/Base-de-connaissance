@@ -1,5 +1,3 @@
-# Pour lancer tous les services, exécutez la commande suivante :
-# python start_all.py
 import subprocess
 import time
 from kafka import KafkaProducer
@@ -47,7 +45,9 @@ def run_producer_script():
 
 
 if __name__ == "__main__":
+
     start_docker()
     wait_for_kafka()
     run_producer_script()
+
 
