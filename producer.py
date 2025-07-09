@@ -7,6 +7,7 @@ import time
 from dotenv import load_dotenv
 
 
+
 load_dotenv()
 # Logger
 logging.basicConfig(
@@ -14,6 +15,7 @@ logging.basicConfig(
     format='%(asctime)s - %(levelname)s - %(message)s'
 )
 logger = logging.getLogger(__name__)
+
 # Kafka
 try:
     producer = KafkaProducer(
@@ -23,17 +25,23 @@ try:
 except Exception as e:
     logger.error(f"Erreur Kafka : {e}")
     raise
+
 KAFKA_TOPIC_README = "github-readme"
 KAFKA_TOPIC_COMMITS = "github-commits"
 KAFKA_TOPIC_CONTRIBUTORS = "github-contributors"
+
 # GitHub
 owner = "Git-Know"
 base_api_url = f"https://api.github.com/orgs/{owner}/repos"
+
 GITHUB_TOKEN = os.getenv("GITHUB_TOKEN")
+
+
 headers = {
     "Authorization": f"token {GITHUB_TOKEN}",
     "Accept": "application/vnd.github.v3+json"
 }
+
 def fetch_and_send_readme(repo_name):
     logger.info(f":page_imprimée: README de {repo_name}")
     url = f"https://api.github.com/repos/{owner}/{repo_name}/readme"
@@ -46,10 +54,12 @@ def fetch_and_send_readme(repo_name):
                 readme_content = requests.get(download_url).text
                 # Envoi dans Kafka
                 producer.send(KAFKA_TOPIC_README, {"content": readme_content, "repository": repo_name})
+
                 # Sauvegarde locale
                 os.makedirs(f"output/{repo_name}", exist_ok=True)
                 with open(f"output/{repo_name}/README.md", "w", encoding="utf-8") as f:
                     f.write(readme_content)
+
                 logger.info(f":coche_blanche: README envoyé et enregistré pour {repo_name}")
             else:
                 logger.warning(f":danger: Pas de download_url pour {repo_name}")
@@ -63,6 +73,7 @@ def fetch_and_send_commits(repo_name):
     try:
         response = requests.get(url, headers=headers, timeout=10)
         commits = response.json()
+
         if not isinstance(commits, list):
             logger.warning(f":danger: Pas de liste de commits reçue pour {repo_name}")
             return
@@ -73,6 +84,7 @@ def fetch_and_send_commits(repo_name):
                 if not detail_url:
                     continue
                 detailed_commit = requests.get(detail_url, headers=headers).json()
+
                 # Envoi Kafka
                 producer.send(KAFKA_TOPIC_COMMITS, detailed_commit)
                 # Sauvegarde fichier
@@ -87,6 +99,7 @@ def fetch_and_send_contributors(repo_name):
     try:
         response = requests.get(url, headers=headers, timeout=10)
         contributors = response.json()
+
         if not isinstance(contributors, list):
             logger.warning(f":danger: Pas de contributeurs trouvés pour {repo_name}")
             return
@@ -99,6 +112,7 @@ def fetch_and_send_contributors(repo_name):
                     "contributions": c["contributions"]
                 }
                 f.write(f"{c['login']} - {c['contributions']} contributions\n")
+
                 # Envoi Kafka
                 producer.send(KAFKA_TOPIC_CONTRIBUTORS, contrib_info)
         logger.info(f":coche_blanche: Contributeurs envoyés et enregistrés pour {repo_name}")
@@ -121,6 +135,7 @@ def process_all_repos():
             fetch_and_send_commits(repo_name)
             fetch_and_send_contributors(repo_name)
             time.sleep(1)  # Pause courte pour respecter le rate limit
+
         producer.flush()
         logger.info(":fusée: Traitement de tous les dépôts terminé")
     except Exception as e:

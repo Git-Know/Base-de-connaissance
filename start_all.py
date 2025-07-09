@@ -1,12 +1,17 @@
 import subprocess
 import time
-from kafka import KafkaProducer
+from kafka import KafkaProducer,KafkaConsumer
 import sys
+import json
+
+
 
 DOCKER_COMPOSE_CMD = ["docker-compose", "up", "-d"]
 KAFKA_BOOTSTRAP_SERVERS = "localhost:9092"
 PRODUCER_SCRIPT = "producer.py"
-KAFKA_TIMEOUT = 60  # secondes
+CONSUMER_SCRIPT = "consumer.py"
+KAFKA_TIMEOUT = 60  
+
 
 
 def start_docker():
@@ -43,6 +48,20 @@ def run_producer_script():
         print(f"❌ Erreur lors de l'exécution de {PRODUCER_SCRIPT} : {e}")
         sys.exit(1)
 
+def run_consumer_script():
+    print("🚀 Lancement du script consumer.py...")
+    try:
+        # Utilise "py" sous Windows, sinon "python" selon ton système
+        subprocess.run(["py", CONSUMER_SCRIPT], check=True)
+    except subprocess.CalledProcessError as e:
+        print(f"❌ Erreur lors de l'exécution de {CONSUMER_SCRIPT} : {e}")
+        sys.exit(1)
+
+if __name__ == "__main__":
+    start_docker()
+    wait_for_kafka()
+    run_producer_script()
+    run_consumer_script()
 
 if __name__ == "__main__":
 
