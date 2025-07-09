@@ -10,7 +10,6 @@ __pycache__/
 
 # Dossiers de sortie / résultats
 output/
-entities_outputs/
 
 # Fichiers temporaires ou de log
 *.log
