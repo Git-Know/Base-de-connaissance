@@ -55,37 +55,8 @@ def run_consumer_script():
         print(f"❌ Erreur lors de l'exécution de {CONSUMER_SCRIPT} : {e}")
         sys.exit(1)
 
-def read_github_readme_topic():
-    TOPIC_NAME = "github-readme"
-    BOOTSTRAP_SERVERS = "localhost:9092"
-    GROUP_ID = "readme-viewer"
-
-    consumer = KafkaConsumer(
-        TOPIC_NAME,
-        bootstrap_servers=BOOTSTRAP_SERVERS,
-        auto_offset_reset="earliest",
-        group_id=GROUP_ID,
-        enable_auto_commit=True,
-        value_deserializer=lambda m: json.loads(m.decode("utf-8"))
-    )
-
-    print("📡 Lecture des messages du topic 'github-readme'...")
-
-    try:
-        for i, message in enumerate(consumer, 1):
-            value = message.value
-            repo_name = value.get("repository", "inconnu")
-            print(f"\n📝 Message {i} reçu (repo: {repo_name}):")
-            print(json.dumps(value, indent=2, ensure_ascii=False))
-            print("-" * 60)
-    except KeyboardInterrupt:
-        print("\n❌ Arrêt manuel par l'utilisateur.")
-    finally:
-        consumer.close()
-
 if __name__ == "__main__":
     start_docker()
     wait_for_kafka()
     run_producer_script()
-    #read_github_readme_topic()
     run_consumer_script()
