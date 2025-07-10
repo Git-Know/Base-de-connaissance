@@ -1,0 +1,2 @@
+docker build -t spark-notebook -f dockerfile.jupyter .
+docker exec -it spark-notebook jupyter server list
