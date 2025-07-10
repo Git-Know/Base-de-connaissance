@@ -1,0 +1,31 @@
+FROM bitnami/spark:3.5
+
+USER root
+
+# Install python3-pip
+RUN apt-get update && apt-get install -y python3-pip wget && \
+    apt-get clean && \
+    rm -rf /var/lib/apt/lists/*
+
+# Install Python packages
+RUN pip3 install --upgrade pip && \
+    pip3 install jupyterlab ipykernel pandas seaborn matplotlib kafka-python
+
+# Download Spark-Kafka integration JARs
+RUN cd /opt/bitnami/spark/jars && \
+    wget https://repo1.maven.org/maven2/org/apache/spark/spark-sql-kafka-0-10_2.12/3.5.0/spark-sql-kafka-0-10_2.12-3.5.0.jar && \
+    wget https://repo1.maven.org/maven2/org/apache/kafka/kafka-clients/3.5.1/kafka-clients-3.5.1.jar && \
+    wget https://repo1.maven.org/maven2/org/apache/commons/commons-pool2/2.12.0/commons-pool2-2.12.0.jar && \
+    wget https://repo1.maven.org/maven2/org/apache/spark/spark-token-provider-kafka-0-10_2.12/3.5.0/spark-token-provider-kafka-0-10_2.12-3.5.0.jar
+
+# Switch back to non-root user
+USER 1001
+
+# Expose Jupyter port
+EXPOSE 8888
+
+# Set the working directory
+WORKDIR /opt/bitnami/work
+
+# Set the entrypoint to start Jupyter
+CMD ["jupyter", "lab", "--ip=0.0.0.0", "--port=8888", "--no-browser", "--allow-root"]
