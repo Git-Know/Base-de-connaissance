@@ -8,11 +8,18 @@ import argparse
 DOCKER_COMPOSE_CMD = ["docker-compose", "up", "-d"]
 KAFKA_BOOTSTRAP_SERVERS = "localhost:9092"
 KAFKA_TIMEOUT = 60  # secondes
+from kafka import KafkaProducer,KafkaConsumer
+
+
+
+PRODUCER_SCRIPT = "producer.py"
+CONSUMER_SCRIPT = "consumer.py"
 
 def get_args():
     parser = argparse.ArgumentParser()
     parser.add_argument("--script", default="producer.py", help="Nom du script à exécuter (par défaut: producer.py)")
     return parser.parse_args()
+
 
 def start_docker():
     print("🛠️  Démarrage des services Docker...")
@@ -43,23 +50,21 @@ def run_producer_script(script_name):
         print(f"❌ Le script {script_name} n'existe pas.")
         sys.exit(1)
 
-    if not os.path.exists(".env"):
-        print("⚠️  Fichier .env introuvable. Veuillez le créer pour fournir le GITHUB_TOKEN.")
-
-    print(f"🚀 Lancement du script \033[1m{script_name}\033[0m ...")
+def run_consumer_script():
+    print("🚀 Lancement du script consumer.py...")
     try:
-        result = subprocess.run([sys.executable, script_name], capture_output=True, text=True)
-        print(result.stdout)
-        if result.returncode != 0:
-            print(f"❌ Erreur lors de l'exécution de {script_name} :")
-            print(result.stderr)
-            sys.exit(result.returncode)
-    except Exception as e:
-        print(f"❌ Exception lors de l'exécution de {script_name} : {e}")
+        # Utilise "py" sous Windows, sinon "python" selon ton système
+        subprocess.run(["py", CONSUMER_SCRIPT], check=True)
+    except subprocess.CalledProcessError as e:
+        print(f"❌ Erreur lors de l'exécution de {CONSUMER_SCRIPT} : {e}")
         sys.exit(1)
 
 if __name__ == "__main__":
     args = get_args()
     start_docker()
     wait_for_kafka()
-    run_producer_script(args.script)
+    run_producer_script()
+    run_consumer_script()
+
+
+

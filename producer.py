@@ -28,7 +28,6 @@ except Exception as e:
     logger.error(f"Erreur Kafka : {e}")
     raise
 
-# Topics Kafka
 KAFKA_TOPIC_README = "github-readme"
 KAFKA_TOPIC_COMMITS = "github-commits"
 KAFKA_TOPIC_CONTRIBUTORS = "github-contributors"
