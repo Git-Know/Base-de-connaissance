@@ -1,12 +1,12 @@
 from kafka import KafkaConsumer
 import json
-from utils import clean_text, extract_entities, save_json, generate_summary
+from utils import clean_text, extract_entities, save_json, generate_summary_nlp
 import os
 
 TOPIC_NAME = "github-readme"
 BOOTSTRAP_SERVERS = "localhost:9092"
 GROUP_ID = "readme-consumer-group"
-BASE_OUTPUT_DIR = "output"  # correspond au dossier utilisé par producer.py
+BASE_OUTPUT_DIR = "output"
 
 consumer = KafkaConsumer(
     TOPIC_NAME,
@@ -29,23 +29,19 @@ for msg in consumer:
         print(f"[⚠️] Aucun contenu dans le message du repo {repo_name}. Ignoré.")
         continue
 
+    # Nettoyage et extraction
     cleaned = clean_text(raw_readme)
-    result = extract_entities(cleaned)
-    result["repository"] = repo_name  # utile pour suivi dans le fichier JSON
+    entities = extract_entities(cleaned)
+    summary = generate_summary_nlp(cleaned, project_name=repo_name)
 
-    # Générer résumé automatique
-    summary = generate_summary(result, project_name=repo_name)
-    result["summary"] = summary
+    entities["repository"] = repo_name
+    entities["summary"] = summary
 
-    # Nettoyage du nom du repo pour être sûr qu'il est compatible avec le nom de dossier
+    # Sauvegarde JSON
     safe_repo_name = repo_name.replace("/", "_").replace("\\", "_")
-
-    # Création du dossier si nécessaire
     repo_output_dir = os.path.join(BASE_OUTPUT_DIR, safe_repo_name)
     os.makedirs(repo_output_dir, exist_ok=True)
-
-    # Générer le fichier d'entités dans le dossier du repo
     output_path = os.path.join(repo_output_dir, "entities.json")
-    save_json(result, output_path)
+    save_json(entities, output_path)
 
-    print(f"[✅] Entités extraites sauvegardées dans : {output_path}")
+    print(f"[✅] Résumé + entités sauvegardés dans : {output_path}")
