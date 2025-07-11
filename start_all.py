@@ -43,7 +43,7 @@ def wait_for_kafka(timeout=KAFKA_TIMEOUT):
 def run_producer_script():
     print("🚀 Lancement du script producer.py...")
     try:
-        subprocess.run(["python", PRODUCER_SCRIPT], check=True)
+        subprocess.run(["py", PRODUCER_SCRIPT], check=True)
     except subprocess.CalledProcessError as e:
         print(f"❌ Erreur lors de l'exécution de {PRODUCER_SCRIPT} : {e}")
         sys.exit(1)
@@ -63,10 +63,6 @@ if __name__ == "__main__":
     run_producer_script()
     run_consumer_script()
 
-if __name__ == "__main__":
 
-    start_docker()
-    wait_for_kafka()
-    run_producer_script()
 
 
