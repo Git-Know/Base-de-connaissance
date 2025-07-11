@@ -1,4 +1,7 @@
 venv/
-*.env
 output/
+*.log
+*.env
+.ipynb_checkpoints/
+*.env
 __pycache__/
