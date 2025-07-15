@@ -1,6 +1,6 @@
 import re
-import json
-import os
+# import json
+# import os
 import spacy
 from transformers import pipeline
 
@@ -20,12 +20,12 @@ def clean_text(text):
     text = re.sub(r"\s+", " ", text) #remplace les suites des espaces en un seul
     return text.strip() #supprime les espaces au debut et au fin du chaine
 
-def save_json(data, path):
-    dir_path = os.path.dirname(path)
-    if dir_path != "":
-        os.makedirs(dir_path, exist_ok=True)
-    with open(path, "w", encoding="utf-8") as f:
-        json.dump(data, f, indent=2, ensure_ascii=False)
+# def save_json(data, path):
+#     dir_path = os.path.dirname(path)
+#     if dir_path != "":
+#         os.makedirs(dir_path, exist_ok=True)
+#     with open(path, "w", encoding="utf-8") as f:
+#         json.dump(data, f, indent=2, ensure_ascii=False)
 
 def extract_entities(text, project_name=None):
     doc = nlp(text)
