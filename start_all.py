@@ -1,6 +1,6 @@
 import subprocess
 import time
-from kafka import KafkaProducer,KafkaConsumer
+from kafka import KafkaProducer
 import sys
 
 DOCKER_COMPOSE_CMD = ["docker-compose", "up", "-d"]
@@ -46,7 +46,6 @@ def run_producer_script():
 def run_consumer_script():
     print("🚀 Lancement du script consumer.py...")
     try:
-        # Utilise "py" sous Windows, sinon "python" selon ton système
         subprocess.run(["py", CONSUMER_SCRIPT], check=True)
     except subprocess.CalledProcessError as e:
         print(f"❌ Erreur lors de l'exécution de {CONSUMER_SCRIPT} : {e}")
