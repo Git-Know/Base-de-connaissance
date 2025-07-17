@@ -2,24 +2,21 @@ import subprocess
 import time
 import os
 import sys
-from kafka import KafkaProducer
 import argparse
+from kafka import KafkaProducer
 
+# Commande Docker
 DOCKER_COMPOSE_CMD = ["docker-compose", "up", "-d"]
 KAFKA_BOOTSTRAP_SERVERS = "localhost:9092"
 KAFKA_TIMEOUT = 60  # secondes
-from kafka import KafkaProducer,KafkaConsumer
-
-
 
 PRODUCER_SCRIPT = "producer.py"
 CONSUMER_SCRIPT = "consumer.py"
 
 def get_args():
     parser = argparse.ArgumentParser()
-    parser.add_argument("--script", default="producer.py", help="Nom du script à exécuter (par défaut: producer.py)")
+    parser.add_argument("--script", default=PRODUCER_SCRIPT, help="Nom du script producteur à exécuter")
     return parser.parse_args()
-
 
 def start_docker():
     print("🛠️  Démarrage des services Docker...")
@@ -45,26 +42,23 @@ def wait_for_kafka(timeout=KAFKA_TIMEOUT):
                 sys.exit(1)
             time.sleep(2)
 
-def run_producer_script(script_name):
+def run_script(script_name):
     if not os.path.exists(script_name):
         print(f"❌ Le script {script_name} n'existe pas.")
         sys.exit(1)
 
-def run_consumer_script():
-    print("🚀 Lancement du script consumer.py...")
+    print(f"🚀 Lancement du script {script_name}...")
     try:
-        # Utilise "py" sous Windows, sinon "python" selon ton système
-        subprocess.run(["py", CONSUMER_SCRIPT], check=True)
+        command = ["py", script_name] if os.name == "nt" else ["python3", script_name]
+        subprocess.run(command, check=True)
+        print(f"✅ {script_name} exécuté avec succès.")
     except subprocess.CalledProcessError as e:
-        print(f"❌ Erreur lors de l'exécution de {CONSUMER_SCRIPT} : {e}")
+        print(f"❌ Erreur lors de l'exécution de {script_name} : {e}")
         sys.exit(1)
 
 if __name__ == "__main__":
     args = get_args()
     start_docker()
     wait_for_kafka()
-    run_producer_script()
-    run_consumer_script()
-
-
-
+    run_script(args.script)          # Lancement du producteur (par défaut: producer.py)
+    run_script(CONSUMER_SCRIPT)      # Lancement du consumer

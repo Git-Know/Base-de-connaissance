@@ -2,11 +2,18 @@ from kafka import KafkaConsumer
 import json
 from utils import clean_text, extract_entities, save_json, generate_summary_nlp
 import os
+from pymongo import MongoClient  # <-- importer pymongo
 
+# Paramètres Kafka
 TOPIC_NAME = "github-readme"
 BOOTSTRAP_SERVERS = "localhost:9092"
 GROUP_ID = "readme-consumer-group"
 BASE_OUTPUT_DIR = "output"
+
+# Connexion MongoDB (sans authentification puisque ton Mongo est en mode open)
+client = MongoClient("mongodb://localhost:27017/")
+db = client["maBase"]  # <-- remplace 'maBase' par le nom de ta base MongoDB
+collection = db["entities"]  # nom de la collection où tu stockeras les entités
 
 consumer = KafkaConsumer(
     TOPIC_NAME,
@@ -45,3 +52,10 @@ for msg in consumer:
     save_json(entities, output_path)
 
     print(f"[✅] Résumé + entités sauvegardés dans : {output_path}")
+
+    # --- INSERTION DANS MONGODB ---
+    try:
+        collection.insert_one(entities)
+        print(f"[💾] Données insérées dans MongoDB pour le repo : {repo_name}")
+    except Exception as e:
+        print(f"[❌] Erreur lors de l’insertion MongoDB : {e}")

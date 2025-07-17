@@ -1,4 +1,0 @@
-author_name,module_path,contributions,last_commit,primary_author,recent_contributor
-Alice,src/moduleA,10,2025-07-01,true,true
-Bob,src/moduleA,5,2025-06-20,false,false
-Charlie,src/moduleB,7,2025-07-05,true,true
