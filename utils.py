@@ -1,38 +1,28 @@
 import re
-# import json
-# import os
 import spacy
 from transformers import pipeline
 
-
+# Charger modèle spaCy et pipeline Transformers une seule fois
 nlp = spacy.load("en_core_web_md")
+summarizer = pipeline("summarization", model="facebook/bart-large-cnn")
 
+# Listes de référence
 LANGUAGES = {"python", "java", "javascript", "typescript", "c++", "c#", "php", "ruby"}
 FRAMEWORKS = {"django", "flask", "fastapi", "spring", "express", "react", "angular", "vue", "nestjs", "rails", "ionic"}
-TOOLS = {"docker", "kafka", "git", "kubernetes", "spark", "hadoop","erp","graphql"}
-FEATURES = {"authentication","scheduling", "chat", "dashboard", "search", "cart", "payment", "upload", "download", "rest api", "notification"}
-DOMAINS = {"e commerce", "nlp", "healthcare", "education", "finance", "iot", "machine learning","ecommerce"}
+TOOLS = {"docker", "kafka", "git", "kubernetes", "spark", "hadoop", "erp", "graphql"}
+FEATURES = {"authentication", "scheduling", "chat", "dashboard", "search", "cart", "payment", "upload", "download", "rest api", "notification"}
+DOMAINS = {"e commerce", "nlp", "healthcare", "education", "finance", "iot", "machine learning", "ecommerce"}
 SECURITY = {"jwt", "oauth2", "https", "rbac"}
 DATABASES = {"mysql", "postgresql", "mongodb", "sqlite", "firebase", "redis"}
 
 def clean_text(text):
-    text = re.sub(r"[^\w\s]", " ", text) #supprime les ponctuations 
-    text = re.sub(r"\s+", " ", text) #remplace les suites des espaces en un seul
-    return text.strip() #supprime les espaces au debut et au fin du chaine
-
-# def save_json(data, path):
-#     dir_path = os.path.dirname(path)
-#     if dir_path != "":
-#         os.makedirs(dir_path, exist_ok=True)
-#     with open(path, "w", encoding="utf-8") as f:
-#         json.dump(data, f, indent=2, ensure_ascii=False)
+    text = re.sub(r"[^\w\s]", " ", text)
+    text = re.sub(r"\s+", " ", text)
+    return text.strip()
 
 def extract_entities(text, project_name=None):
     doc = nlp(text)
     text_lower = text.lower()
-
-    spacy_entities = {(ent.text.strip().lower(), ent.label_) for ent in doc.ents}
-    already_found = {e[0] for e in spacy_entities}
 
     matched_langs = [lang for lang in LANGUAGES if lang in text_lower]
     matched_frameworks = [fw for fw in FRAMEWORKS if fw in text_lower]
@@ -54,11 +44,9 @@ def extract_entities(text, project_name=None):
 
     return result
 
-summarizer = pipeline("summarization", model="facebook/bart-large-cnn")
-
 def generate_summary_nlp(text, project_name="This project"):
     max_chunk = 1024
-    chunks = [text[i:i+max_chunk] for i in range(0, len(text), max_chunk)]
+    chunks = [text[i:i + max_chunk] for i in range(0, len(text), max_chunk)]
 
     full_summary = ""
     for chunk in chunks:
@@ -67,3 +55,48 @@ def generate_summary_nlp(text, project_name="This project"):
 
     return full_summary.strip()
 
+
+def match_developer_to_project(developer, project):
+    # Supporte "author" ou "author_name"
+    dev_name = developer.get("author") or developer.get("author_name") or "unknown"
+
+    match_result = {
+        "developer": dev_name,
+        "repository": project.get("repository", "unknown"),
+        "score": 0,
+        "matched_technologies": {
+            "languages": [],
+            "frameworks": []
+        }
+    }
+
+    dev_tech = {
+        "languages": [tech.lower() for tech in developer.get("languages", [])],
+        "frameworks": [tech.lower() for tech in developer.get("frameworks", [])]
+    }
+
+    weights = {
+        "languages": 3,
+        "frameworks": 2
+    }
+
+    max_score = sum(
+        weights[cat] * len(project.get(cat, []))
+        for cat in ["languages", "frameworks"]
+    )
+
+    score = 0
+
+    for cat in ["languages", "frameworks"]:
+        for tech in project.get(cat, []):
+            if tech.lower() in dev_tech[cat]:
+                match_result["matched_technologies"][cat].append(tech)
+                score += weights[cat]
+
+    percentage_score = (score / max_score) * 100 if max_score > 0 else 0
+    contributions = developer.get("contributions") or developer.get("total_contributions", 0)
+    bonus = min(contributions / 1000, 1.0) * 10
+    final_score = min(percentage_score + bonus, 100)
+
+    match_result["score"] = round(final_score, 2)
+    return match_result

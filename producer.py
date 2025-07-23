@@ -30,6 +30,7 @@ KAFKA_TOPIC_README = "github-readme"
 KAFKA_TOPIC_COMMITS = "github-commits"
 KAFKA_TOPIC_CONTRIBUTORS = "github-contributors"
 KAFKA_TOPIC_LOGS = "github-import-logs"
+KAFKA_TOPIC_FRAMEWORKS = "frameworks-topic"
 
 
 # GitHub
@@ -43,6 +44,15 @@ headers = {
     "Authorization": f"token {GITHUB_TOKEN}",
     "Accept": "application/vnd.github.v3+json"
 }
+
+# Liste des frameworks connus
+known_frameworks = [
+    "React", "Angular", "Vue", "Next.js", "Nuxt", "Svelte",
+    "Spring", "Spring Boot", "Django", "Flask", "Express", "NestJS",
+    "Laravel", "Symfony", "Rails", "FastAPI"
+]
+
+frameworks_by_contributor = {}
 
 def fetch_and_send_readme(repo_name):
     url = f"https://api.github.com/repos/{owner}/{repo_name}/readme"
@@ -66,6 +76,23 @@ def fetch_and_send_readme(repo_name):
     except Exception as e:
         return f"Exception: {str(e)}"
 
+def fetch_repo_file(repo_name, filepath):
+    url = f"https://api.github.com/repos/{owner}/{repo_name}/contents/{filepath}"
+    response = requests.get(url, headers=headers)
+    if response.status_code == 200:
+        file_data = response.json()
+        if file_data.get("encoding") == "base64":
+            import base64
+            return base64.b64decode(file_data["content"]).decode("utf-8", errors="ignore")
+    return None
+
+def detect_frameworks_from_content(content):
+    found = []
+    for fw in known_frameworks:
+        if fw.lower() in content.lower():
+            found.append(fw)
+    return list(set(found))
+
 def fetch_and_send_commits(repo_name):
     url = f"https://api.github.com/repos/{owner}/{repo_name}/commits"
     try:
@@ -81,10 +108,41 @@ def fetch_and_send_commits(repo_name):
                 if not detail_url:
                     continue
                 detailed_commit = requests.get(detail_url, headers=headers).json()
+
+                # Get contributor
+                author = detailed_commit.get("commit", {}).get("author", {}).get("name", "unknown")
+
+                # Send commit to Kafka
                 producer.send(KAFKA_TOPIC_COMMITS, detailed_commit)
+
+                # Write summary
                 f.write(f"{detailed_commit['sha']} - {detailed_commit['commit']['message']}\n")
-                f.write(f"{detailed_commit['commit']['author']['name']} - {detailed_commit['commit']['author']['date']}\n\n")
+                f.write(f"{author} - {detailed_commit['commit']['author']['date']}\n\n")
+
+                # Only check files once per repo, not every commit
+            for file in ["Gemfile.lock","requirements-dev.txt","requirements-doc.txt","requirements-tests.txt", "package.json", "requirements.txt", "pom.xml"]:
+                content = fetch_repo_file(repo_name, file)
+                if content:
+                    found_frameworks = detect_frameworks_from_content(content)
+                    if found_frameworks:
+                        for commit in commits:
+                            author = commit.get("commit", {}).get("author", {}).get("name", "unknown")
+                            if author not in frameworks_by_contributor:
+                                frameworks_by_contributor[author] = set()
+                            frameworks_by_contributor[author].update(found_frameworks)
+
+        # Convert sets to lists before saving
+        result = {author: list(frameworks) for author, frameworks in frameworks_by_contributor.items()}
+
+        # Save locally
+        with open("frameworks_by_contributor.json", "w", encoding="utf-8") as f:
+            json.dump(result, f, indent=4)
+
+        # Send to Kafka
+        producer.send(KAFKA_TOPIC_FRAMEWORKS, result)
+
         return "sent"
+
     except Exception as e:
         return f"Exception: {str(e)}"
 
