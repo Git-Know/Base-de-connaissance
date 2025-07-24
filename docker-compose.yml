@@ -2,7 +2,22 @@ version: '3.8'
 
 services:
 
-#======================================== kafka setup =====================================
+
+  mongodb:
+    image: mongo:6.0
+    container_name: mongodb
+    ports:
+      - "27018:27017"
+    volumes:
+     - ./mongo_data:/data/db
+    networks:
+      - kafka-net
+    healthcheck:
+      test: ["CMD", "mongo", "--eval", "db.adminCommand('ping')"]
+      interval: 15s
+      timeout: 10s
+      retries: 5
+      start_period: 30s
 
   kafka:
     hostname: kafka
@@ -58,6 +73,7 @@ services:
       retries: 5
       start_period: 30s
 
+
 #======================================== spark setup =====================================
 
   spark-master:
@@ -70,7 +86,7 @@ services:
       - SPARK_MASTER_HOST=spark-master
     ports:
       - "7077:7077"
-      - "8080:8080"
+      - "8082:8080"
     healthcheck:
       test: [ "CMD", "curl", "-f", "http://localhost:8080" ]
       interval: 10s
@@ -147,7 +163,7 @@ services:
 
 volumes:
   kafka_data:
-
+  mongo_data:
 
 networks:
   kafka-net:
