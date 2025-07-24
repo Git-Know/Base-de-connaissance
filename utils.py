@@ -1,7 +1,8 @@
 import re
 import spacy
 from transformers import pipeline
-
+import json
+import os
 # Charger modèle spaCy et pipeline Transformers une seule fois
 nlp = spacy.load("en_core_web_md")
 summarizer = pipeline("summarization", model="facebook/bart-large-cnn")
@@ -43,6 +44,13 @@ def extract_entities(text, project_name=None):
     }
 
     return result
+
+def save_json(data, path):
+        dir_path = os.path.dirname(path)
+        if dir_path != "":
+            os.makedirs(dir_path, exist_ok=True)
+        with open(path, "w", encoding="utf-8") as f:
+            json.dump(data, f, indent=2, ensure_ascii=False)
 
 def generate_summary_nlp(text, project_name="This project"):
     max_chunk = 1024
