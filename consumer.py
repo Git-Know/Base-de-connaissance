@@ -10,10 +10,15 @@ BOOTSTRAP_SERVERS = "localhost:9092"
 GROUP_ID = "readme-consumer-group"
 BASE_OUTPUT_DIR = "output"
 
-# Connexion MongoDB (sans authentification puisque ton Mongo est en mode open)
-client = MongoClient("mongodb://localhost:27017/")
-db = client["maBase"]  # <-- remplace 'maBase' par le nom de ta base MongoDB
-collection = db["entities"]  # nom de la collection où tu stockeras les entités
+from pymongo import MongoClient
+
+client = MongoClient("mongodb://root:examplepassword@localhost:27018/?authSource=admin")
+db = client["maBase"]
+collection = db["entities"]
+
+print(collection.count_documents({}))  # affiche le nombre de documents dans la collection
+
+
 
 consumer = KafkaConsumer(
     TOPIC_NAME,

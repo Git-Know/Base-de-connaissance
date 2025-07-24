@@ -58,7 +58,7 @@ def run_script(script_name):
 
 if __name__ == "__main__":
     args = get_args()
-    start_docker()
+    # start_docker()
     wait_for_kafka()
     run_script(args.script)          # Lancement du producteur (par défaut: producer.py)
     run_script(CONSUMER_SCRIPT)      # Lancement du consumer
