@@ -1,12 +1,25 @@
 from kafka import KafkaConsumer, KafkaProducer
 import json
-from utils import clean_text, extract_entities, generate_summary_nlp
+from utils import clean_text, extract_entities, save_json, generate_summary_nlp
+import os
+from pymongo import MongoClient  # <-- importer pymongo
 
-# Configuration Kafka
+# Paramètres Kafka
 TOPIC_NAME = "github-readme"
 OUTPUT_TOPIC = "github-summary"
 BOOTSTRAP_SERVERS = "localhost:9092"
 GROUP_ID = "readme-consumer-group"
+BASE_OUTPUT_DIR = "output"
+
+from pymongo import MongoClient
+
+client = MongoClient("mongodb://root:examplepassword@localhost:27018/?authSource=admin")
+db = client["maBase"]
+collection = db["entities"]
+
+print(collection.count_documents({}))  # affiche le nombre de documents dans la collection
+
+
 
 # Consumer Kafka
 consumer = KafkaConsumer(
@@ -44,7 +57,18 @@ for msg in consumer:
     entities["repository"] = repo_name
     entities["summary"] = summary
 
-    # Envoi du résultat dans un topic Kafka
-    producer.send(OUTPUT_TOPIC, entities)
-    producer.flush()
-    print(f"[✅] Résumé + entités envoyés dans le topic Kafka : {OUTPUT_TOPIC}")
+    # Sauvegarde JSON
+    safe_repo_name = repo_name.replace("/", "_").replace("\\", "_")
+    repo_output_dir = os.path.join(BASE_OUTPUT_DIR, safe_repo_name)
+    os.makedirs(repo_output_dir, exist_ok=True)
+    output_path = os.path.join(repo_output_dir, "entities.json")
+    save_json(entities, output_path)
+
+    print(f"[✅] Résumé + entités sauvegardés dans : {output_path}")
+
+    # --- INSERTION DANS MONGODB ---
+    try:
+        collection.insert_one(entities)
+        print(f"[💾] Données insérées dans MongoDB pour le repo : {repo_name}")
+    except Exception as e:
+        print(f"[❌] Erreur lors de l’insertion MongoDB : {e}")
