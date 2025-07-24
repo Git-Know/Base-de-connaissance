@@ -9,7 +9,6 @@ from dotenv import load_dotenv
 # Charger les variables d'environnement
 load_dotenv()
 
-
 load_dotenv()
 # Logger
 logging.basicConfig(
@@ -154,8 +153,8 @@ def process_all_repos():
             fetch_and_send_readme(repo_name)
             fetch_and_send_commits(repo_name)
             fetch_and_send_contributors(repo_name)
-            fetch_and_save_file_tree(repo_name)
-            time.sleep(1)  # Pause pour éviter le rate limit
+            time.sleep(1)  
+
         producer.flush()
         logger.info("🚀 Traitement de tous les dépôts terminé")
     except Exception as e:

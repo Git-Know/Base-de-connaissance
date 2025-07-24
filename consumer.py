@@ -1,4 +1,4 @@
-from kafka import KafkaConsumer
+from kafka import KafkaConsumer, KafkaProducer
 import json
 from utils import clean_text, extract_entities, save_json, generate_summary_nlp
 import os
@@ -6,6 +6,7 @@ from pymongo import MongoClient  # <-- importer pymongo
 
 # Paramètres Kafka
 TOPIC_NAME = "github-readme"
+OUTPUT_TOPIC = "github-summary"
 BOOTSTRAP_SERVERS = "localhost:9092"
 GROUP_ID = "readme-consumer-group"
 BASE_OUTPUT_DIR = "output"
@@ -20,6 +21,7 @@ print(collection.count_documents({}))  # affiche le nombre de documents dans la 
 
 
 
+# Consumer Kafka
 consumer = KafkaConsumer(
     TOPIC_NAME,
     bootstrap_servers=BOOTSTRAP_SERVERS,
@@ -27,6 +29,12 @@ consumer = KafkaConsumer(
     group_id=GROUP_ID,
     enable_auto_commit=True,
     value_deserializer=lambda m: json.loads(m.decode("utf-8"))
+)
+
+# Producer Kafka
+producer = KafkaProducer(
+    bootstrap_servers=BOOTSTRAP_SERVERS,
+    value_serializer=lambda v: json.dumps(v).encode("utf-8")
 )
 
 print("[📡] En attente des messages depuis Kafka...")
