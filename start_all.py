@@ -2,10 +2,13 @@ import subprocess
 import time
 import os
 import sys
+
+from kafka.admin import KafkaAdminClient, NewTopic
+from kafka.errors import TopicAlreadyExistsError
+
 import argparse
 from kafka import KafkaProducer
 
-# Commande Docker
 
 DOCKER_COMPOSE_CMD = ["docker-compose", "up", "-d"]
 KAFKA_BOOTSTRAP_SERVERS = "localhost:9092"
@@ -29,14 +32,15 @@ def start_docker():
         sys.exit(1)
 KAFKA_TIMEOUT = 60  
 
-def start_docker():
-    print("🛠️  Démarrage des services Docker...")
-    try:
-        subprocess.run(DOCKER_COMPOSE_CMD, check=True)
-        print("✅ Docker Compose lancé avec succès.")
-    except subprocess.CalledProcessError as e:
-        print(f"❌ Erreur lors du démarrage Docker Compose : {e}")
-        sys.exit(1)
+
+# def start_docker():
+#     print("🛠️  Démarrage des services Docker...")
+#     try:
+#         subprocess.run(DOCKER_COMPOSE_CMD, check=True)
+#         print("✅ Docker Compose lancé avec succès.")
+#     except subprocess.CalledProcessError as e:
+#         print(f"❌ Erreur lors du démarrage Docker Compose : {e}")
+#         sys.exit(1)
 
 
 def wait_for_kafka(timeout=KAFKA_TIMEOUT):
@@ -76,6 +80,7 @@ def run_producer_script():
         sys.exit(1)
 
 if __name__ == "__main__":
+
     args = get_args()
     # start_docker()
     start_docker()
