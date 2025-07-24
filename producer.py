@@ -6,7 +6,7 @@ import os
 import time
 from dotenv import load_dotenv
 from datetime import datetime
-
+import base64
 
 load_dotenv()
 # Logger
@@ -82,7 +82,6 @@ def fetch_repo_file(repo_name, filepath):
     if response.status_code == 200:
         file_data = response.json()
         if file_data.get("encoding") == "base64":
-            import base64
             return base64.b64decode(file_data["content"]).decode("utf-8", errors="ignore")
     return None
 

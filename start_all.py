@@ -6,7 +6,7 @@ import sys
 DOCKER_COMPOSE_CMD = ["docker-compose", "up", "-d"]
 KAFKA_BOOTSTRAP_SERVERS = "localhost:9092"
 PRODUCER_SCRIPT = "producer.py"
-CONSUMER_SCRIPT = "match.py"
+CONSUMER_SCRIPT = "consumer.py"
 KAFKA_TIMEOUT = 60  
 
 
@@ -55,5 +55,5 @@ def run_consumer_script():
 if __name__ == "__main__":
     start_docker()
     wait_for_kafka()
-    run_producer_script()
+    # run_producer_script()
     run_consumer_script()
