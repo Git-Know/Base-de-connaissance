@@ -6,3 +6,4 @@ output/
 *.env
 __pycache__/
 data/
+mongo_data/
