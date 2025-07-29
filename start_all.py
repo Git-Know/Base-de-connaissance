@@ -10,7 +10,7 @@ import argparse
 from kafka import KafkaProducer
 
 
-DOCKER_COMPOSE_CMD = ["docker-compose", "up", "-d"]
+DOCKER_COMPOSE_CMD = ["docker","compose", "up", "-d"]
 KAFKA_BOOTSTRAP_SERVERS = "localhost:9092"
 KAFKA_TIMEOUT = 60  # secondes
 
