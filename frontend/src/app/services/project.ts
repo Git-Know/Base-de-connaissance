@@ -28,7 +28,12 @@ export class ProjectService {
     return this.http.delete(`${this.apiUrl}/${repository}`);
   }
 
-  addProject(formData: FormData) {
-    return this.http.post(this.apiUrl, formData);
+  addProject(project: any): Observable<any> {
+    return this.http.post(this.apiUrl, project);  
   }
+
+  updateProject(repoName: string, projectData: any) {
+    return this.http.put(`${this.apiUrl}/${repoName}`, projectData);
+  }
+  
 }

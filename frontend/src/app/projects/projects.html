@@ -84,15 +84,12 @@
       <p>Aucun détail disponible.</p>
     </div>
 
-    <div *ngIf="selectedProject" class="project-details">
+    <div *ngIf="!isEditing && selectedProject" class="project-details">
       <p><strong>Nom du dépôt :</strong> {{ selectedProject.repository }}</p>
       <p><strong>Langages :</strong> {{ selectedProject.languages?.join(', ') || 'N/A' }}</p>
       <p><strong>Frameworks :</strong> {{ selectedProject.frameworks?.join(', ') || 'N/A' }}</p>
-      <p><strong>Outils :</strong> {{ selectedProject.tools?.join(', ') || 'N/A' }}</p>
       <p><strong>Fonctionnalités :</strong> {{ selectedProject.features?.join(', ') || 'N/A' }}</p>
       <p><strong>Domaine :</strong> {{ selectedProject.domain?.join(', ') || 'N/A' }}</p>
-      <p><strong>Sécurité :</strong> {{ selectedProject.security?.join(', ') || 'N/A' }}</p>
-      <p><strong>Base de données :</strong> {{ selectedProject.database?.join(', ') || 'Non spécifiée' }}</p>
       <p><strong>Résumé :</strong></p>
       <p [class.expanded]="showFullSummary" class="summary">
         {{ selectedProject.summary || 'Aucun résumé disponible.' }}
@@ -100,9 +97,33 @@
       <span class="toggle-summary-btn" (click)="showFullSummary = !showFullSummary">
         {{ showFullSummary ? 'Réduire' : 'Voir tout' }}
       </span>
+      <div class ="popup-actions">
+        <button class="submit-btn" (click)="startEdit()">Modifier</button>
+        <button class="close-btn" (click)="closeDetails()">Fermer</button>
+      </div>
     </div>
+    <!-- Formulaire de modification -->
+    <div *ngIf="isEditing" class="project-details edit-form">
+      <label>Langages</label>
+      <input type="text" [(ngModel)]="editProject.languagesInput" />
 
-    <button class="close-btn" (click)="closeDetails()">Fermer</button>
+      <label>Frameworks</label>
+      <input type="text" [(ngModel)]="editProject.frameworksInput" />
+
+      <label>Fonctionnalités</label>
+      <input type="text" [(ngModel)]="editProject.featuresInput" />
+
+      <label>Domaine</label>
+      <input type="text" [(ngModel)]="editProject.domainInput" />
+
+      <label>Résumé</label>
+      <textarea [(ngModel)]="editProject.summary" rows="4"></textarea>
+
+      <div class="popup-actions">
+        <button class="submit-btn" (click)="saveEdit()">Enregistrer</button>
+        <button class="close-btn" (click)="cancelEdit()">Annuler</button>
+      </div>
+    </div>
   </div>
 </div>
 
@@ -139,17 +160,22 @@
         <input type="text" name="frameworks" [(ngModel)]="newProject.frameworksInput" placeholder="Ex: flask, react" />
       </label>
 
-            <!-- Bouton upload personnalisé dans ta popup ajout -->
-      <label class="custom-file-upload">
-        <input type="file" (change)="onFileSelected($event)" required />
-        <span>📁 Choisir un fichier README</span>
+      <label>
+        Fonctionnalités (séparées par virgule) :
+        <input type="text" name="features" [(ngModel)]="newProject.featuresInput" placeholder="Ex: Auth, Upload, Search" />
       </label>
-      
+
+      <label>
+        Résumé du projet :
+        <textarea name="summary" [(ngModel)]="newProject.summary" rows="3" placeholder="Résumé du projet..."></textarea>
+      </label>
+
       <div class="popup-actions">
-        <button type="submit" [disabled]="!projectForm.form.valid || !selectedReadmeFile">Ajouter</button>
+        <button type="submit" [disabled]="!projectForm.form.valid">Ajouter</button>
         <button type="button" (click)="closeAddPopup()">Annuler</button>
       </div>
     </form>
   </div>
 </div>
+
 

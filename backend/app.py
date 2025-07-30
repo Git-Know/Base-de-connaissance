@@ -13,28 +13,21 @@ def get_projects():
     projects = list(collections["projects"].find({}, {"_id": 0}))
     return jsonify(projects)
 
-#ajouter un projet
+# Ajouter un projet 
 @app.route("/projects", methods=["POST"])
 def add_project():
-    # Récupérer les champs du formulaire (form-data)
-    repo_name = request.form.get("repository")
-    languages = request.form.getlist("languages")  # plusieurs valeurs possibles
-    frameworks = request.form.getlist("frameworks")
+    data = request.get_json()
+    if not data:
+        return jsonify({"error": "Invalid JSON"}), 400
 
-    if not repo_name:
-        return jsonify({"error": "repository is required"}), 400
+    repo_name = data.get("repository")
+    languages = data.get("languages", [])
+    frameworks = data.get("frameworks", [])
+    features = data.get("features", [])
+    summary = data.get("summary")
 
-    # Vérifier si fichier README est uploadé
-    if "readme" not in request.files:
-        return jsonify({"error": "README file is required"}), 400
-
-    readme_file = request.files["readme"]
-    readme_text = readme_file.read().decode("utf-8")  # lire le contenu en texte
-
-    # Nettoyer et extraire entités
-    cleaned_readme = clean_text(readme_text)
-    entities = extract_entities(cleaned_readme, repo_name)
-    summary = generate_summary_nlp(cleaned_readme, repo_name)
+    if not repo_name or not summary:
+        return jsonify({"error": "repository and summary are required"}), 400
 
     exists = collections["projects"].count_documents({"repository": repo_name})
     if exists:
@@ -44,20 +37,13 @@ def add_project():
         "repository": repo_name,
         "languages": languages,
         "frameworks": frameworks,
-        "tools": entities.get("tools", []),
-        "features": entities.get("features", []),
-        "domain": entities.get("domain", []),
-        "security": entities.get("security", []),
-        "database": entities.get("database", []),
+        "features": features,
         "summary": summary
     }
 
-    # insertion en DB
     inserted = collections["projects"].insert_one(project_doc)
-
-    # ajouter le champ _id en string pour la réponse
     project_doc["_id"] = str(inserted.inserted_id)
-    
+
     return jsonify({"message": "Project added successfully", "project": project_doc}), 201
 
 #developpeurs recommendes
@@ -91,6 +77,25 @@ def delete_project(repository):
     if result.deleted_count == 0:
         return jsonify({"error": "Project not found"}), 404
     return jsonify({"message": f"Project '{repository}' deleted successfully."}), 200
+
+@app.route("/projects/<repository>", methods=["PUT"])
+def update_project(repository):
+    data = request.get_json()
+    if not data:
+        return jsonify({"error": "Invalid JSON"}), 400
+
+    updated_doc = {
+        "languages": data.get("languages", []),
+        "frameworks": data.get("frameworks", []),
+        "features": data.get("features", []),
+        "summary": data.get("summary", "")
+    }
+
+    result = collections["projects"].update_one({"repository": repository}, {"$set": updated_doc})
+    if result.matched_count == 0:
+        return jsonify({"error": "Project not found"}), 404
+
+    return jsonify({"message": "Project updated successfully"}), 200
 
 if __name__ == "__main__":
     app.run(debug=True)

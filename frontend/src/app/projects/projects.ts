@@ -114,7 +114,6 @@ export class Projects {
         // Retirer le projet supprimé de la liste
         this.projects = this.projects.filter(p => p.repository !== project.repository);
         this.filteredProjects = this.filteredProjects.filter(p => p.repository !== project.repository);
-  
         // Fermer le popup de confirmation
         this.projectToDelete = null;
       },
@@ -125,61 +124,104 @@ export class Projects {
   }
   
   showAddPopup = false;
-  newProject = {
+
+newProject = {
+  repository: '',
+  languagesInput: '',
+  frameworksInput: '',
+  featuresInput: '',
+  summary: ''
+};
+
+// Ouvre popup ajout
+openAddPopup() {
+  this.showAddPopup = true;
+  this.newProject = {
     repository: '',
     languagesInput: '',
-    frameworksInput: ''
+    frameworksInput: '',
+    featuresInput: '',
+    summary: ''
   };
-  selectedReadmeFile: File | null = null;
+}
 
-  // Ouvre popup ajout
-  openAddPopup() {
-    this.showAddPopup = true;
-    this.newProject = { repository: '', languagesInput: '', frameworksInput: '' };
-    this.selectedReadmeFile = null;
-  }
+// Ferme popup ajout
+closeAddPopup() {
+  this.showAddPopup = false;
+}
 
-  // Ferme popup ajout
-  closeAddPopup() {
-    this.showAddPopup = false;
-  }
+// Soumettre le nouveau projet sans README
+submitNewProject() {
+  if (!this.newProject.repository) return;
 
-  // Récupérer le fichier sélectionné
-  onFileSelected(event: Event) {
-    const input = event.target as HTMLInputElement;
-    if (input.files && input.files.length > 0) {
-      this.selectedReadmeFile = input.files[0];
+  const languages = this.newProject.languagesInput
+    ? this.newProject.languagesInput.split(',').map(s => s.trim()).filter(Boolean)
+    : [];
+
+  const frameworks = this.newProject.frameworksInput
+    ? this.newProject.frameworksInput.split(',').map(s => s.trim()).filter(Boolean)
+    : [];
+
+  const features = this.newProject.featuresInput
+    ? this.newProject.featuresInput.split(',').map(s => s.trim()).filter(Boolean)
+    : [];
+
+  const body = {
+    repository: this.newProject.repository,
+    languages,
+    frameworks,
+    features,
+    summary: this.newProject.summary
+  };
+
+  this.projectService.addProject(body).subscribe({
+    next: (res) => {
+      console.log('Projet ajouté');
+      this.showAddPopup = false;
+      this.ngOnInit();
+    },
+    error: (err) => {
+      console.error('Erreur ajout', err);
     }
-  }
+  });
+}
+isEditing: boolean = false;
+editProject: any = {};
 
-  // Soumettre le nouveau projet
-  submitNewProject() {
-    if (!this.newProject.repository || !this.selectedReadmeFile) return;
+startEdit() {
+  this.isEditing = true;
+  this.editProject = {
+    languagesInput: this.selectedProject.languages?.join(', ') || '',
+    frameworksInput: this.selectedProject.frameworks?.join(', ') || '',
+    featuresInput: this.selectedProject.features?.join(', ') || '',
+    domainInput: this.selectedProject.domain?.join(', ') || '',
+    summary: this.selectedProject.summary || ''
+  };
+}
 
-    // Convertir les champs texte en array (split par virgule)
-    const languages = this.newProject.languagesInput
-      ? this.newProject.languagesInput.split(',').map(s => s.trim()).filter(s => s.length > 0)
-      : [];
-    const frameworks = this.newProject.frameworksInput
-      ? this.newProject.frameworksInput.split(',').map(s => s.trim()).filter(s => s.length > 0)
-      : [];
+saveEdit() {
+  const updatedData = {
+    languages: this.editProject.languagesInput.split(',').map((s: string) => s.trim()).filter(Boolean),
+    frameworks: this.editProject.frameworksInput.split(',').map((s: string) => s.trim()).filter(Boolean),
+    features: this.editProject.featuresInput.split(',').map((s: string) => s.trim()).filter(Boolean),
+    domain: this.editProject.domainInput.split(',').map((s: string) => s.trim()).filter(Boolean),
+    summary: this.editProject.summary
+  };
 
-    const formData = new FormData();
-    formData.append('repository', this.newProject.repository);
-    languages.forEach(lang => formData.append('languages', lang));
-    frameworks.forEach(fw => formData.append('frameworks', fw));
-    formData.append('readme', this.selectedReadmeFile);
+  this.projectService.updateProject(this.selectedProject.repository, updatedData).subscribe({
+    next: () => {
+      Object.assign(this.selectedProject, updatedData);
+      this.isEditing = false;
+    },
+    error: (err) => {
+      console.error('Erreur modification', err);
+    }
+  });
+}
 
-    this.projectService.addProject(formData).subscribe({
-      next: (res) => {
-        console.log('project added successfully')
-        this.showAddPopup = false;
-        this.ngOnInit();
-      },
-      error: (err) => {
-        console.error(err);
-      }
-    });
-  }
-  
+cancelEdit() {
+  this.isEditing = false;
+}
+
+
 }
