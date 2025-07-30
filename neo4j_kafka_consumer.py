@@ -30,8 +30,10 @@ logging.info("Connected to Neo4j")
 
 # --- Neo4j write functions ---
 def insert_module(tx, record):
-    logging.debug(f"Inserting module node and linking to technology: {record}")
-    tx.run("""
+    logging.debug(f"Inserting module node and linking to technologies and repo: {record}")
+    query = """
+        MERGE (r:Repository {name: $repo})
+        
         MERGE (m:Module {name: $module})
         SET m.num_contributors = $num_contributors,
             m.num_commits = $num_commits,
@@ -46,63 +48,75 @@ def insert_module(tx, record):
             m.maturity_score = $maturity_score,
             m.cohesion_score = $cohesion_score
 
-        MERGE (t:Language  {name: $tech})
-        MERGE (m)-[:USES]->(t)
-    """,
-    module=record["module_candidate"],
-    num_contributors=record["num_contributors"],
-    num_commits=record["num_commits"],
-    total_churn=record["total_churn"],
-    age_days=record["age_days"],
-    popularity_score=record["popularity_score"],
-    first_commit_time=record.get("first_commit_time"),
-    last_commit_time=record.get("last_commit_time"),
-    commit_cnt=record.get("commit_cnt"),
-    single_author_module=record.get("single_author_module"),
-    stability_score=record.get("stability_score"),
-    maturity_score=record.get("maturity_score"),
-    cohesion_score=record.get("cohesion_score"),
-    tech=record["dominant_language"])
+        MERGE (r)-[:HAS_MODULE]->(m)
+
+        FOREACH (lang IN $languages | 
+            MERGE (t:Language {name: lang})
+            MERGE (m)-[:USES]->(t)
+        )
+    """
+    tx.run(query,
+        repo=record["repo"],
+        module=record["module_candidate"],
+        num_contributors=record["num_contributors"],
+        num_commits=record["num_commits"],
+        total_churn=record["total_churn"],
+        age_days=record["age_days"],
+        popularity_score=record["popularity_score"],
+        first_commit_time=record.get("first_commit_time"),
+        last_commit_time=record.get("last_commit_time"),
+        commit_cnt=record.get("commit_cnt"),
+        single_author_module=record.get("single_author_module"),
+        stability_score=record.get("stability_score"),
+        maturity_score=record.get("maturity_score"),
+        cohesion_score=record.get("cohesion_score"),
+        languages=record.get("languages", [])
+    )
 
 
-def insert_developer_module_edge(tx, record):
+def insert_developer_module_edge(tx, record, module_path):
+    module_path = record.get("module_path") or record.get("module_candidate")
+    if not module_path:
+        raise ValueError("Missing 'module_path' in developer record")
     logging.debug(f"Linking developer to module: {record}")
-    tx.run("""
+    query = """
         MERGE (a:Developer {name: $author})
         MERGE (m:Module {name: $module})
-        MERGE (a)-[r:CONTRIBUTED_TO]->(m)
-        SET r.contributions = $contributions,
-            r.primary_author = $primary,
-            r.recent_contributor = $recent,
-            r.rank = $rank,
-            r.last_commit = datetime($last_commit),
-            r.language = $language
-    """, 
+        MERGE (a)-[rel:CONTRIBUTED_TO]->(m)
+        SET rel.contributions = $contributions,
+            rel.primary_author = $primary,
+            rel.recent_contributor = $recent,
+            rel.rank = $rank,
+            rel.last_commit = datetime($last_commit),
+            rel.language = $language
+    """
+    tx.run(query,
         author=record["author_name"],
-        module=record["module_path"],
-        contributions=record["contributions"],
-        primary=record["primary_author"],
-        recent=bool(record["recent_contributor"]),
-        rank=record["rank"],
+        module=module_path,
+        contributions=record.get("total_contributions", 0),
+        primary=record.get("primary_author", False),
+        recent=bool(record.get("recent_contributor", False)),
+        rank=record.get("rank", 0.0),
         last_commit=record["last_commit"],
-        language=record["dominant_language"]
+        language=record.get("language", "unknown")
     )
 
 def insert_developer_tech_edge(tx, record):
     logging.debug(f"Linking developer to tech: {record}")
-    tx.run("""
+    query = """
         MERGE (a:Developer {name: $author})
         MERGE (t:Language {name: $tech})
         MERGE (a)-[r:HAS_SKILL_IN]->(t)
         SET r.total_contributions = $total_contributions,
             r.last_commit = datetime($last_commit),
             r.recent = $recent
-    """, 
+    """
+    tx.run(query,
         author=record["author_name"],
-        tech=record["dominant_language"],
-        total_contributions=record["total_contributions"],
+        tech=record.get("language", "unknown"),
+        total_contributions=record.get("total_contributions", 0),
         last_commit=record["last_commit"],
-        recent=bool(record["recent_contributor"])
+        recent=bool(record.get("recent_contributor", False))
     )
 
 # --- Main loop ---
@@ -130,7 +144,7 @@ try:
                     session.execute_write(insert_module, record)
                     logging.info("Module node written to Neo4j.")
                 elif topic == "contributor_module_rank":
-                    session.execute_write(insert_developer_module_edge, record)
+                    session.execute_write(insert_developer_module_edge, record, record["module_path"])
                     logging.info("Developer–Module edge written to Neo4j.")
                 elif topic == "contributor_skill_summary":
                     session.execute_write(insert_developer_tech_edge, record)
