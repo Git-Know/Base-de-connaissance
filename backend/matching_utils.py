@@ -3,7 +3,7 @@ import spacy
 from transformers import pipeline
 import json
 import os
-# Charger modèle spaCy et pipeline Transformers une seule fois
+
 nlp = spacy.load("en_core_web_md")
 summarizer = pipeline("summarization", model="facebook/bart-large-cnn")
 
@@ -53,15 +53,19 @@ def save_json(data, path):
             json.dump(data, f, indent=2, ensure_ascii=False)
 
 def generate_summary_nlp(text, project_name="This project"):
+    if len(text.split()) < 50:
+        return text.strip()
+
     max_chunk = 1024
     chunks = [text[i:i + max_chunk] for i in range(0, len(text), max_chunk)]
 
     full_summary = ""
     for chunk in chunks:
-        summary = summarizer(chunk, max_length=130, min_length=30, do_sample=False)
+        summary = summarizer(chunk, max_length=60, min_length=15, do_sample=False)
         full_summary += summary[0]['summary_text'] + " "
 
     return full_summary.strip()
+
 
 
 def match_developer_to_project(developer, project):

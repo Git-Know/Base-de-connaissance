@@ -7,3 +7,8 @@ output/
 __pycache__/
 data/
 mongo_data/
+logs/
+*sync_status.json
+*matched_results.json
+*grouped_contributors.json
+*frameworks_by_contributor.json

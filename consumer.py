@@ -1,29 +1,22 @@
-from kafka import KafkaConsumer, KafkaProducer
+from kafka import KafkaConsumer
+from pymongo import MongoClient
 import json
-from utils import clean_text, extract_entities, save_json, generate_summary_nlp
-import os
-from pymongo import MongoClient  # <-- importer pymongo
+
+# Connexion à MongoDB sans user/password
+client = MongoClient("mongodb://localhost:27017/")
+db = client["maBase"]
+collection_summary = db["projects"]
+collection_contributors = db["contributors"]
+collection_matching = db["matching"]
 
 # Paramètres Kafka
-TOPIC_NAME = "github-readme"
-OUTPUT_TOPIC = "github-summary"
+TOPICS = ["github-summary", "contributors-merged", "matching-topic"]
 BOOTSTRAP_SERVERS = "localhost:9092"
-GROUP_ID = "readme-consumer-group"
-BASE_OUTPUT_DIR = "output"
+GROUP_ID = "mongo"
 
-from pymongo import MongoClient
-
-client = MongoClient("mongodb://root:examplepassword@localhost:27018/?authSource=admin")
-db = client["maBase"]
-collection = db["entities"]
-
-print(collection.count_documents({}))  # affiche le nombre de documents dans la collection
-
-
-
-# Consumer Kafka
+# Création du consommateur Kafka
 consumer = KafkaConsumer(
-    TOPIC_NAME,
+    *TOPICS,
     bootstrap_servers=BOOTSTRAP_SERVERS,
     auto_offset_reset="earliest",
     group_id=GROUP_ID,
@@ -31,44 +24,47 @@ consumer = KafkaConsumer(
     value_deserializer=lambda m: json.loads(m.decode("utf-8"))
 )
 
-# Producer Kafka
-producer = KafkaProducer(
-    bootstrap_servers=BOOTSTRAP_SERVERS,
-    value_serializer=lambda v: json.dumps(v).encode("utf-8")
-)
-
-print("[📡] En attente des messages depuis Kafka...")
+print("[📡] En attente des messages Kafka...")
 
 for msg in consumer:
-    print(f"[📥] Message reçu depuis le topic: {msg.topic}")
+    topic = msg.topic
+    data = msg.value
 
-    raw_readme = msg.value.get("content", "")
-    repo_name = msg.value.get("repository", "unknown-repo")
+    if topic == "github-summary":
+        repo_name = data.get("repository")
+        if repo_name:
+            # Vérifie s’il existe déjà un projet avec ce nom
+            if collection_summary.count_documents({"repository": repo_name}) == 0:
+                try:
+                    collection_summary.insert_one(data)
+                    print(f"[✅] Projet inséré (repo: {repo_name})")
+                except Exception as e:
+                    print(f"[❌] Erreur insertion github-summary: {e}")
+            else:
+                print(f"[ℹ️] Projet déjà existant ignoré : {repo_name}")
+        else:
+            print("[⚠️] Donnée invalide (pas de repository)")
 
-    if not raw_readme:
-        print(f"[⚠️] Aucun contenu dans le message du repo {repo_name}. Ignoré.")
-        continue
-
-    # Nettoyage et extraction
-    cleaned = clean_text(raw_readme)
-    entities = extract_entities(cleaned)
-    summary = generate_summary_nlp(cleaned, project_name=repo_name)
-
-    entities["repository"] = repo_name
-    entities["summary"] = summary
-
-    # Sauvegarde JSON
-    safe_repo_name = repo_name.replace("/", "_").replace("\\", "_")
-    repo_output_dir = os.path.join(BASE_OUTPUT_DIR, safe_repo_name)
-    os.makedirs(repo_output_dir, exist_ok=True)
-    output_path = os.path.join(repo_output_dir, "entities.json")
-    save_json(entities, output_path)
-
-    print(f"[✅] Résumé + entités sauvegardés dans : {output_path}")
-
-    # --- INSERTION DANS MONGODB ---
-    try:
-        collection.insert_one(entities)
-        print(f"[💾] Données insérées dans MongoDB pour le repo : {repo_name}")
-    except Exception as e:
-        print(f"[❌] Erreur lors de l’insertion MongoDB : {e}")
+    elif topic == "contributors-merged":
+        try:
+            collection_contributors.insert_one(data)
+            print(f"[✅] Contributeur inséré (repo: {data.get('repository', 'inconnu')})")
+        except Exception as e:
+            print(f"[❌] Erreur insertion contributors-merged: {e}")
+    elif topic == "matching-topic":
+        developer = data.get("developer")
+        repository = data.get("repository")
+        if developer and repository:
+            exists = collection_matching.find_one({
+                "developer": developer,
+                "repository": repository
+            })
+            if not exists:
+                collection_matching.insert_one(data)
+                print(f"[✅] Appariement inséré : {developer} -> {repository}")
+            else:
+                print(f"[⚠️] Appariement déjà existant : {developer} -> {repository}")
+        else:
+            print("[⚠️] Clé 'developer' ou 'repository' manquante dans matching-topic")
+    else:
+        print(f"[⚠️] Topic non géré : {topic}")

@@ -1,0 +1,155 @@
+<!-- 🔍 Barre de recherche + bouton Ajouter -->
+<div class="top-bar">
+  <input
+    type="text"
+    [(ngModel)]="searchTerm"
+    (ngModelChange)="onSearchChange()"
+    placeholder="🔍 Rechercher un projet..."
+    class="search-input"
+  />
+  <button class="add-btn" (click)="openAddPopup()">+ Nouveau Projet</button>
+</div>
+<div class="table-container">
+  <table class="project-table">
+    <thead>
+      <tr>
+        <th>📁 Repository</th>
+        <th>🧠 Langages</th>
+        <th>⚙️ Frameworks</th>
+        <th>⚙️ Actions</th>
+      </tr>
+    </thead>
+    <tbody>
+      <tr *ngFor="let project of filteredProjects; let i = index" [ngClass]="{ 'row-alt': i % 2 === 1 }">
+        <td><strong>{{ project.repository }}</strong></td>
+        <td>
+          <span *ngIf="project.languages.length; else noLang">
+            <span class="badge" *ngFor="let lang of project.languages">{{ lang }}</span>
+          </span>
+          <ng-template #noLang><span class="badge neutral">Aucun</span></ng-template>
+        </td>
+        <td>
+          <span *ngIf="project.frameworks.length; else noFw">
+            <span class="badge secondary" *ngFor="let fw of project.frameworks">{{ fw }}</span>
+          </span>
+          <ng-template #noFw><span class="badge neutral">Aucun</span></ng-template>
+        </td>
+        <td class="actions">
+          <button class="icon-btn view" (click)="openRecommendPopup(project.repository)">
+            👁 
+          </button>
+          <button class="icon-btn view" (click)="viewDetails(project.repository)">
+            📄 
+          </button>
+          <button class="icon-btn view" (click)="confirmDelete(project)">
+            🗑️ 
+          </button>
+        </td>
+      </tr>
+    </tbody>
+  </table>
+</div>
+
+<!-- Popup des developpeurs recommendes-->
+<div class="popup-backdrop" *ngIf="showPopup">
+  <div class="popup-card">
+    <h2>Développeurs Recommandés</h2>
+
+    <div *ngIf="recommendedDevs.length === 0" class="no-devs">
+      <p>Aucun développeur recommandé pour le moment.</p>
+    </div>
+
+    <div *ngFor="let dev of recommendedDevs" class="dev-card">
+      <div class="dev-info">
+        <div class="dev-header">
+          <strong>{{ dev.developer }}</strong>
+          <span class="score">Score: {{ dev.score }}</span>
+        </div>
+        <span class="tech-info">Langages: {{ dev.matched_technologies?.languages?.join(', ') || 'N/A' }}</span>
+        <span class="tech-info">Frameworks: {{ dev.matched_technologies?.frameworks?.join(', ') || 'N/A' }}</span>
+      </div>
+      <button class="assign-btn">Assigner</button>
+    </div>
+
+    <button class="close-btn" (click)="closePopup()">Fermer</button>
+  </div>
+</div>
+
+<!-- Popup de details de projet -->
+<div class="popup-backdrop" *ngIf="selectedProject">
+  <div class="popup-card">
+    <h2>Détails du Projet</h2>
+
+    <div *ngIf="!selectedProject" class="no-devs">
+      <p>Aucun détail disponible.</p>
+    </div>
+
+    <div *ngIf="selectedProject" class="project-details">
+      <p><strong>Nom du dépôt :</strong> {{ selectedProject.repository }}</p>
+      <p><strong>Langages :</strong> {{ selectedProject.languages?.join(', ') || 'N/A' }}</p>
+      <p><strong>Frameworks :</strong> {{ selectedProject.frameworks?.join(', ') || 'N/A' }}</p>
+      <p><strong>Outils :</strong> {{ selectedProject.tools?.join(', ') || 'N/A' }}</p>
+      <p><strong>Fonctionnalités :</strong> {{ selectedProject.features?.join(', ') || 'N/A' }}</p>
+      <p><strong>Domaine :</strong> {{ selectedProject.domain?.join(', ') || 'N/A' }}</p>
+      <p><strong>Sécurité :</strong> {{ selectedProject.security?.join(', ') || 'N/A' }}</p>
+      <p><strong>Base de données :</strong> {{ selectedProject.database?.join(', ') || 'Non spécifiée' }}</p>
+      <p><strong>Résumé :</strong></p>
+      <p [class.expanded]="showFullSummary" class="summary">
+        {{ selectedProject.summary || 'Aucun résumé disponible.' }}
+      </p>
+      <span class="toggle-summary-btn" (click)="showFullSummary = !showFullSummary">
+        {{ showFullSummary ? 'Réduire' : 'Voir tout' }}
+      </span>
+    </div>
+
+    <button class="close-btn" (click)="closeDetails()">Fermer</button>
+  </div>
+</div>
+
+<!-- Popup Confirmation Suppression -->
+<div class="popup-backdrop" *ngIf="projectToDelete">
+  <div class="popup-card">
+    <h2>Confirmer la suppression</h2>
+    <p>Voulez-vous vraiment supprimer le projet <strong>{{ projectToDelete.repository }}</strong> ?</p>
+    
+    <div class="popup-actions">
+      <button class="confirm-btn" (click)="deleteProject(projectToDelete)">Supprimer</button>
+      <button class="cancel-btn" (click)="cancelDelete()">Annuler</button>
+    </div>
+  </div>
+</div>
+
+<!-- Popup pour ajouter un projet -->
+<div class="popup-backdrop" *ngIf="showAddPopup">
+  <div class="popup-card">
+    <h2>Ajouter un Nouveau Projet</h2>
+    <form (ngSubmit)="submitNewProject()" #projectForm="ngForm">
+      <label>
+        Nom du projet:
+        <input type="text" name="repository" [(ngModel)]="newProject.repository" required />
+      </label>
+
+      <label>
+        Langages (séparés par virgule) :
+        <input type="text" name="languages" [(ngModel)]="newProject.languagesInput" placeholder="Ex: python, javascript" />
+      </label>
+
+      <label>
+        Frameworks (séparés par virgule) :
+        <input type="text" name="frameworks" [(ngModel)]="newProject.frameworksInput" placeholder="Ex: flask, react" />
+      </label>
+
+            <!-- Bouton upload personnalisé dans ta popup ajout -->
+      <label class="custom-file-upload">
+        <input type="file" (change)="onFileSelected($event)" required />
+        <span>📁 Choisir un fichier README</span>
+      </label>
+      
+      <div class="popup-actions">
+        <button type="submit" [disabled]="!projectForm.form.valid || !selectedReadmeFile">Ajouter</button>
+        <button type="button" (click)="closeAddPopup()">Annuler</button>
+      </div>
+    </form>
+  </div>
+</div>
+
