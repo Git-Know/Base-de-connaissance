@@ -6,7 +6,7 @@ output/
 *.env
 __pycache__/
 data/
-
+mongo_data/
 logs/
 *sync_status.json
 *matched_results.json
