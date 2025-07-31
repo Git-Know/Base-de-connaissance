@@ -1,7 +1,9 @@
 from flask import Flask, request, jsonify
 from flask_cors import CORS
 from database import get_collections
-from matching_utils import match_developer_to_project,clean_text, extract_entities, generate_summary_nlp
+from matching_utils import match_developer_to_project
+from collections import defaultdict
+from datetime import datetime
 app = Flask(__name__)
 CORS(app, supports_credentials=True)
 
@@ -96,6 +98,30 @@ def update_project(repository):
         return jsonify({"error": "Project not found"}), 404
 
     return jsonify({"message": "Project updated successfully"}), 200
+
+@app.route("/projects/language-stats", methods=["GET"])
+def get_language_stats():
+    projects = list(collections["projects"].find())
+    language_count = {}
+
+    for project in projects:
+        for lang in project.get("languages", []):
+            lang = lang.strip().lower() 
+            language_count[lang] = language_count.get(lang, 0) + 1
+
+    return jsonify(language_count)
+
+@app.route("/projects/contributors", methods=["GET"])
+def get_contributions_by_author():
+    developers = list(collections["contributors"].find())
+    data = {}
+
+    for dev in developers:
+        author = dev.get("author", "Unknown")
+        contributions = dev.get("contributions", 0)
+        data[author] = contributions
+
+    return jsonify(data)
 
 if __name__ == "__main__":
     app.run(debug=True)

@@ -4,6 +4,8 @@ import { HttpClientModule } from '@angular/common/http';
 import { FormsModule } from '@angular/forms'; 
 import { ProjectService } from '../services/project';
 import { Project } from '../models/Project';
+import { NgChartsModule } from 'ng2-charts';
+import { ChartData, ChartOptions, ChartType } from 'chart.js';
 
 @Component({
   standalone: true,
@@ -11,7 +13,8 @@ import { Project } from '../models/Project';
   imports: [
     CommonModule,
     HttpClientModule,
-    FormsModule 
+    FormsModule,
+    NgChartsModule
   ],
   templateUrl: './projects.html',
   styleUrl: './projects.css',
@@ -31,6 +34,16 @@ export class Projects {
   selectedProject: any = null;
   showDetails = false;
 
+  pieChartLabels: string[] = [];
+  pieChartData: number[] = [];
+  pieChartType: ChartType = 'pie';
+
+  
+
+  barChartType: ChartType = 'bar';
+
+  mostActiveDeveloper: string = '';
+
   constructor(private projectService: ProjectService) {}
 
   ngOnInit(): void {
@@ -46,6 +59,10 @@ export class Projects {
         this.loading = false;
         console.error(err);
       }
+    });
+    this.projectService.getLanguageStats().subscribe((stats) => {
+      this.pieChartLabels = Object.keys(stats);
+      this.pieChartData = Object.values(stats);
     });
   }
 
@@ -222,6 +239,5 @@ saveEdit() {
 cancelEdit() {
   this.isEditing = false;
 }
-
 
 }

@@ -3,7 +3,7 @@ import time
 from kafka import KafkaProducer
 import sys
 
-DOCKER_COMPOSE_CMD = ["docker-compose", "up", "-d"]
+DOCKER_COMPOSE_CMD = ["docker","compose", "up", "-d"]
 KAFKA_BOOTSTRAP_SERVERS = "localhost:9092"
 PRODUCER_SCRIPT = "producer.py"
 CONSUMER_SCRIPT = "consumer.py"

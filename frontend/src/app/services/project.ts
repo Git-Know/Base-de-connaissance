@@ -35,5 +35,13 @@ export class ProjectService {
   updateProject(repoName: string, projectData: any) {
     return this.http.put(`${this.apiUrl}/${repoName}`, projectData);
   }
+
+  getLanguageStats(): Observable<{ [lang: string]: number }> {
+    return this.http.get<{ [lang: string]: number }>(`${this.apiUrl}/language-stats`);
+  }
+
+  getContributionsByDeveloper() {
+    return this.http.get<{ [author: string]: number }>(`${this.apiUrl}/contributors`);
+  }
   
 }

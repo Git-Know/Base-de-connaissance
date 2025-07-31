@@ -178,4 +178,35 @@
   </div>
 </div>
 
+<!-- 📊 Section Graphiques -->
+<div class="charts-section">
+  <h3>📊 Statistiques des projets</h3>
+  <div class="chart-row">
+    <!-- Pie Chart Langages -->
+    <div class="chart-card">
+      <h4>Projets par Langages</h4>
+      <canvas baseChart
+        [data]="{
+          labels: pieChartLabels,
+          datasets: [{
+            data: pieChartData,
+            backgroundColor: ['#ff6384', '#36a2eb', '#cc65fe', '#ffce56', '#2ecc71'],
+            label: 'Projets par Langage'
+          }]
+        }"
+        [type]="pieChartType">
+      </canvas>
+    </div>
+
+    <!-- Deuxième chart vide pour maintenant -->
+    <div class="chart-card placeholder">
+      <h4>Autre Statistique</h4>
+      <!-- Tu peux ajouter un autre <canvas baseChart ...> ici plus tard -->
+      <p>À venir...</p>
+    </div>
+  </div>
+</div>
+
+
+
 
