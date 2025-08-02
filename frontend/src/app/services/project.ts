@@ -21,7 +21,7 @@ export class ProjectService {
   }
 
   getRecommendedDevelopers(repository: string) {
-    return this.http.get<any[]>(`${this.apiUrl}/${repository}/recommend`);
+    return this.http.get<any[]>(`${this.apiUrl}/${repository}/recommend/combined`);
   }
 
   deleteProject(repository: string): Observable<any> {
@@ -43,5 +43,14 @@ export class ProjectService {
   getContributionsByDeveloper() {
     return this.http.get<{ [author: string]: number }>(`${this.apiUrl}/contributors`);
   }
+
+  assignDeveloper(developer: string, repository: string): Observable<any> {
+    const body = { developer, repository };
+    return this.http.post(`${this.apiUrl}/assign`, body);
+  }
   
+  unassignDeveloper(developer: string, repository: string): Observable<any> {
+    const body = { developer, repository };
+    return this.http.post(`${this.apiUrl}/unassign`, body);
+  }
 }
