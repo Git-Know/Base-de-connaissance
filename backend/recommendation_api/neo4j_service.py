@@ -48,7 +48,7 @@ def find_top_developers_by_tech_stack(
 ) -> Dict[str, List[Dict[str, Any]]]:
     query = """
     UNWIND $stack AS tech
-MATCH (dev:Developer)-[:HAS_SKILL_IN]->(t:Language)
+    MATCH (dev:Developer)-[:HAS_SKILL_IN]->(t:Language)
     WHERE t.name = toLower(tech)
     RETURN tech AS technology,
            dev.name AS developer_name,

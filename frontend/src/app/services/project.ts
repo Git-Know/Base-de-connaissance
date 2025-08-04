@@ -29,7 +29,7 @@ export class ProjectService {
   }
 
   addProject(project: any): Observable<any> {
-    return this.http.post(this.apiUrl, project);  
+    return this.http.post(`${this.apiUrl}/add`, project);  
   }
 
   updateProject(repoName: string, projectData: any) {
@@ -53,4 +53,16 @@ export class ProjectService {
     const body = { developer, repository };
     return this.http.post(`${this.apiUrl}/unassign`, body);
   }
+
+  getModulesByLanguages(technologies: string[]) {
+    const body = {
+      technologies: technologies 
+    };
+    return this.http.post<any[]>(
+      'http://localhost:5000/recommend/modules',
+      body
+    );
+  }
+  
+  
 }

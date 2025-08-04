@@ -38,10 +38,38 @@
           <button class="icon-btn view" (click)="openRecommendPopup(project.repository)">👁</button>
           <button class="icon-btn view" (click)="viewDetails(project.repository)">📄</button>
           <button class="icon-btn view" (click)="confirmDelete(project)">🗑️</button>
+          <button class="icon-btn view" (click)="openSimilarModules(project)"> 🧩 </button>
         </td>
       </tr>
     </tbody>
   </table>
+</div>
+
+<!-- Popup pour modules similaires -->
+<div class="popup-backdrop" *ngIf="showSimilarModulesPopup">
+  <div class="popup-card">
+    <h2>Modules similaires par langage</h2>
+
+    <div *ngIf="similarModules.length === 0">
+      <p>Aucun module similaire trouvé.</p>
+    </div>
+
+    <div *ngFor="let item of similarModules">
+      <h3>{{ item.technology }}</h3>
+      <ul>
+        <li *ngFor="let module of item.modules">
+          {{ module.module_name }}
+        </li>
+        <li *ngIf="item.modules.length === 0">
+          Aucun module trouvé.
+        </li>
+      </ul>
+    </div>
+
+    <div class="popup-actions">
+      <button class="close-btn" (click)="closeSimilarModules()">Fermer</button>
+    </div>
+  </div>
 </div>
 
 <!-- Popup des developpeurs recommendes -->

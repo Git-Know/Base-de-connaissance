@@ -2,23 +2,14 @@ from flask import Flask, request, jsonify
 from flask_cors import CORS
 from database import get_collections
 from matching_utils import match_developer_to_project
-from collections import defaultdict
 from datetime import datetime
-from neo4j import GraphDatabase
+from flask import Flask, request, jsonify
+from neo4j_service import initialize_neo4j_driver
 
-# --- Neo4j setup ---
-neo4j_uri = "bolt://localhost:7687"
-neo4j_user = "neo4j"
-neo4j_password = "test12345678"
-neo4j_driver = GraphDatabase.driver(neo4j_uri, auth=(neo4j_user, neo4j_password))
+neo4j_driver = initialize_neo4j_driver()
 
 app = Flask(__name__)
 CORS(app, supports_credentials=True)
-
-# Route racine pour tester que le serveur fonctionne bien
-@app.route('/')
-def home():
-    return "Bienvenue sur l'API Flask !"
 
 collections = get_collections()
 
@@ -28,19 +19,21 @@ if collections["contributors"].count_documents({"available": {"$exists": False}}
         {"$set": {"available": True}}
     )
 
-@app.route("/developers/set_all_available", methods=["PUT"])
-def set_all_available_true():
-    result = collections["contributors"].update_many({}, {"$set": {"available": True}})
-    return jsonify({"message": f"{result.modified_count} développeurs mis à jour avec available=True."}), 200
+#######################################API MongoDB#########################################
 
-# Retourner tous les projets
+# @app.route("/developers/set_all_available", methods=["PUT"])
+# def set_all_available_true():
+#     result = collections["contributors"].update_many({}, {"$set": {"available": True}})
+#     return jsonify({"message": f"{result.modified_count} développeurs mis à jour avec available=True."}), 200
+
+#retourner tous les projets
 @app.route("/projects", methods=["GET"])
 def get_projects():
     projects = list(collections["projects"].find({}, {"_id": 0}))
     return jsonify(projects)
 
-# Ajouter un projet
-@app.route("/projects", methods=["POST"])
+# Ajouter un projet 
+@app.route("/projects/add", methods=["POST"])
 def add_project():
     data = request.get_json()
     if not data:
@@ -72,23 +65,7 @@ def add_project():
 
     return jsonify({"message": "Project added successfully", "project": project_doc}), 201
 
-# Développeurs recommandés
-@app.route("/projects/<repository>/recommend", methods=["GET"])
-def recommend_developers(repository):
-    project = collections["projects"].find_one({"repository": repository})
-    if not project:
-        return jsonify({"error": "Project not found"}), 404
-
-    developers = list(collections["contributors"].find({}, {"_id": 0}))
-
-    results = [
-        match_developer_to_project(dev, project)
-        for dev in developers
-    ]
-    results.sort(key=lambda x: (-x["score"]))
-    return jsonify(results[:3])
-
-# Détails d'un projet
+#details d'un projet
 @app.route("/projects/<repository>", methods=["GET"])
 def get_project_by_repository(repository):
     project = collections["projects"].find_one({"repository": repository}, {"_id": 0})
@@ -112,7 +89,7 @@ def get_project_by_repository(repository):
 
     return jsonify(project), 200
 
-# Suppression d'un projet
+#suppression d'un projet
 @app.route("/projects/<repository>", methods=["DELETE"])
 def delete_project(repository):
     result = collections["projects"].delete_one({"repository": repository})
@@ -120,7 +97,7 @@ def delete_project(repository):
         return jsonify({"error": "Project not found"}), 404
     return jsonify({"message": f"Project '{repository}' deleted successfully."}), 200
 
-# Mise à jour d'un projet
+#met a jour un projet
 @app.route("/projects/<repository>", methods=["PUT"])
 def update_project(repository):
     data = request.get_json()
@@ -140,7 +117,7 @@ def update_project(repository):
 
     return jsonify({"message": "Project updated successfully"}), 200
 
-# Retourner le nombre de projet par langage
+#retourner le nombre de projet par langage
 @app.route("/projects/language-stats", methods=["GET"])
 def get_language_stats():
     projects = list(collections["projects"].find())
@@ -153,6 +130,7 @@ def get_language_stats():
 
     return jsonify(language_count)
 
+#recommender un developpeur à un projet
 @app.route("/projects/<repository>/recommend/combined", methods=["GET"])
 def recommend_combined(repository):
     project = collections["projects"].find_one({"repository": repository})
@@ -174,7 +152,7 @@ def recommend_combined(repository):
     # Enrich with Neo4j contributions
     techs = project.get("languages", []) + project.get("frameworks", [])
     with neo4j_driver.session() as session:
-        contributions = session.execute_read(get_contributions_by_tech, techs)
+        contributions = session.execute_read(find_top_developers_by_tech_stack, techs)
 
     for tech, dev_list in contributions.items():
         max_contrib = max((dev["total_contributions"] for dev in dev_list), default=1)
@@ -201,26 +179,7 @@ def recommend_combined(repository):
     results.sort(key=lambda x: -x["score"])
     return jsonify(results[:3])
 
-def get_contributions_by_tech(tx, tech_stack):
-    query = """
-    UNWIND $stack AS tech
-    MATCH (dev:Developer)-[r:HAS_SKILL_IN]->(lang:Language)
-    WHERE toLower(lang.name) = toLower(tech)
-    RETURN tech AS technology,
-           dev.name AS name,
-           r.total_contributions AS total_contributions
-    ORDER BY tech, total_contributions DESC
-    """
-
-    result = tx.run(query, stack=tech_stack)
-    scores = {tech: [] for tech in tech_stack}
-    for row in result:
-        scores[row["technology"]].append({
-            "name": row["name"],
-            "total_contributions": row["total_contributions"]
-        })
-    return scores
-
+#assigner un developpeur a un projet
 @app.route("/projects/assign", methods=["POST"])
 def assign_developer():
     data = request.get_json()
@@ -254,6 +213,7 @@ def assign_developer():
 
     return jsonify({"message": f"Developer '{developer_name}' assigned to project '{repository}'"}), 200
 
+#supprimer un developepeur d'un projet
 @app.route("/projects/unassign", methods=["POST"])
 def unassign_developer():
     data = request.get_json()
@@ -290,7 +250,122 @@ def unassign_developer():
 def get_all_developers():
     developers = list(collections["contributors"].find({}, {"_id": 0}))
     return jsonify(developers)
+#####################################################API Neo4j#####################################
 
+from flask_restx import Api, Resource, fields
+from neo4j_service import initialize_neo4j_driver, find_top_developers_by_tech_stack, add_project_with_devs_and_tech, find_top_modules_by_tech_stack
+from neo4j.exceptions import Neo4jError
+
+# Flask app setup
+api = Api(app, version='1.0', title='Developer Recommendation API',
+          description='Recommend developers by technology stack with contribution ranking')
+
+# ==== Models ====
+
+project_input_model = api.model('ProjectInput', {
+    'project_name': fields.String(required=True, description='Name of the project'),
+    'developers': fields.List(fields.Nested(api.model('DeveloperInput', {
+        'name': fields.String(required=True, description='Developer name'),
+        'technologies': fields.List(fields.String, required=True, description='Technologies used by the developer')
+    })), required=True)
+})
+
+tech_list_model = api.model('TechList', {
+    'technologies': fields.List(fields.String, required=True, description='List of technologies')
+})
+
+developer_model = api.model('Developer', {
+    'name': fields.String(required=True, description='Developer name'),
+    'total_contributions': fields.Integer(required=True, description='Total contributions in this tech')
+})
+
+recommendation_model = api.model('Recommendations', {
+    'technology': fields.List(fields.Nested(developer_model), description='List of recommended developers per tech')
+})
+
+# ==== Routes ====
+
+@api.route('/recommend/developers')
+class DeveloperRecommendation(Resource):
+    @api.expect(tech_list_model, validate=True)
+    @api.doc(description="Recommend developers by a list of technologies, ranked by contributions.")
+    def post(self):
+        data = request.json
+        tech_stack = data.get("technologies", [])
+
+        if not tech_stack:
+            api.abort(400, "Technologies list cannot be empty.")
+
+        try:
+            with neo4j_driver.session() as session:
+                recommendations = session.execute_read(find_top_developers_by_tech_stack, tech_stack)
+            return recommendations
+        except Neo4jError as e:
+            api.abort(500, f"Neo4j query failed: {str(e)}")
+        except Exception as e:
+            api.abort(500, f"Unexpected error: {str(e)}")
+
+
+@api.route('/projects')
+class ProjectRegistration(Resource):
+    @api.expect(project_input_model, validate=True)
+    @api.doc(description="Add a project and associate developers with technologies.")
+    def post(self):
+        data = request.json
+        project_name = data["project_name"]
+        developers = data["developers"]
+
+        if not developers:
+            api.abort(400, "Developers list cannot be empty.")
+
+        try:
+            with neo4j_driver.session() as session:
+                session.execute_write(add_project_with_devs_and_tech, project_name, developers)
+            return {"message": "Project and developers added successfully."}, 201
+        except Neo4jError as e:
+            api.abort(500, f"Neo4j write failed: {str(e)}")
+        except Exception as e:
+            api.abort(500, f"Unexpected error: {str(e)}")
+
+from flask_restx import Resource, fields
+
+# Define input model for tech list (reuse existing tech_list_model if applicable)
+module_model = api.model("Module", {
+    "module_name": fields.String,
+    "num_contributors": fields.Integer,
+    "num_commits": fields.Integer,
+    "total_churn": fields.Integer,
+})
+
+module_recommendation_model = api.model("ModuleRecommendation", {
+    "technology": fields.String,
+    "modules": fields.List(fields.Nested(module_model))
+})
+
+@api.route('/recommend/modules')
+class ModuleRecommendation(Resource):
+    @api.expect(tech_list_model, validate=True)
+    @api.marshal_with(module_recommendation_model)
+    @api.doc(description="Recommend modules by a list of technologies, ranked by contributors and commits.")
+    def post(self):
+        data = request.json
+        tech_stack = data.get("technologies", [])
+
+        if not tech_stack:
+            api.abort(400, "Technologies list cannot be empty.")
+
+        try:
+            with neo4j_driver.session() as session:
+                recommendations = session.execute_read(find_top_modules_by_tech_stack, tech_stack)
+                # Transform dict into list
+                response_data = [
+                    {"technology": tech, "modules": modules}
+                    for tech, modules in recommendations.items()
+                ]
+
+            return response_data
+        except Exception as e:
+            api.abort(500, f"Failed to retrieve module recommendations: {str(e)}")
 
 if __name__ == "__main__":
     app.run(debug=True)
