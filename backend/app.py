@@ -4,7 +4,6 @@ from database import get_collections
 from matching_utils import match_developer_to_project
 from collections import defaultdict
 from datetime import datetime
-from flask import Flask, request, jsonify
 from neo4j import GraphDatabase
 
 # --- Neo4j setup ---
@@ -15,6 +14,11 @@ neo4j_driver = GraphDatabase.driver(neo4j_uri, auth=(neo4j_user, neo4j_password)
 
 app = Flask(__name__)
 CORS(app, supports_credentials=True)
+
+# Route racine pour tester que le serveur fonctionne bien
+@app.route('/')
+def home():
+    return "Bienvenue sur l'API Flask !"
 
 collections = get_collections()
 
@@ -28,13 +32,14 @@ if collections["contributors"].count_documents({"available": {"$exists": False}}
 def set_all_available_true():
     result = collections["contributors"].update_many({}, {"$set": {"available": True}})
     return jsonify({"message": f"{result.modified_count} développeurs mis à jour avec available=True."}), 200
-#retourner tous les projets
+
+# Retourner tous les projets
 @app.route("/projects", methods=["GET"])
 def get_projects():
     projects = list(collections["projects"].find({}, {"_id": 0}))
     return jsonify(projects)
 
-# Ajouter un projet 
+# Ajouter un projet
 @app.route("/projects", methods=["POST"])
 def add_project():
     data = request.get_json()
@@ -67,7 +72,7 @@ def add_project():
 
     return jsonify({"message": "Project added successfully", "project": project_doc}), 201
 
-#developpeurs recommendes
+# Développeurs recommandés
 @app.route("/projects/<repository>/recommend", methods=["GET"])
 def recommend_developers(repository):
     project = collections["projects"].find_one({"repository": repository})
@@ -83,7 +88,7 @@ def recommend_developers(repository):
     results.sort(key=lambda x: (-x["score"]))
     return jsonify(results[:3])
 
-#details d'un projet
+# Détails d'un projet
 @app.route("/projects/<repository>", methods=["GET"])
 def get_project_by_repository(repository):
     project = collections["projects"].find_one({"repository": repository}, {"_id": 0})
@@ -107,7 +112,7 @@ def get_project_by_repository(repository):
 
     return jsonify(project), 200
 
-#suppression d'un projet
+# Suppression d'un projet
 @app.route("/projects/<repository>", methods=["DELETE"])
 def delete_project(repository):
     result = collections["projects"].delete_one({"repository": repository})
@@ -115,7 +120,7 @@ def delete_project(repository):
         return jsonify({"error": "Project not found"}), 404
     return jsonify({"message": f"Project '{repository}' deleted successfully."}), 200
 
-#met a jour un projet
+# Mise à jour d'un projet
 @app.route("/projects/<repository>", methods=["PUT"])
 def update_project(repository):
     data = request.get_json()
@@ -135,7 +140,7 @@ def update_project(repository):
 
     return jsonify({"message": "Project updated successfully"}), 200
 
-#retourner le nombre de projet par langage
+# Retourner le nombre de projet par langage
 @app.route("/projects/language-stats", methods=["GET"])
 def get_language_stats():
     projects = list(collections["projects"].find())
@@ -281,6 +286,10 @@ def unassign_developer():
 
     return jsonify({"message": f"Developer '{developer_name}' removed from project '{repository}' and set available."}), 200
 
+@app.route("/developers", methods=["GET"])
+def get_all_developers():
+    developers = list(collections["contributors"].find({}, {"_id": 0}))
+    return jsonify(developers)
 
 
 if __name__ == "__main__":
