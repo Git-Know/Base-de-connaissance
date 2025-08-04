@@ -35,22 +35,16 @@
           <ng-template #noFw><span class="badge neutral">Aucun</span></ng-template>
         </td>
         <td class="actions">
-          <button class="icon-btn view" (click)="openRecommendPopup(project.repository)">
-            👁 
-          </button>
-          <button class="icon-btn view" (click)="viewDetails(project.repository)">
-            📄 
-          </button>
-          <button class="icon-btn view" (click)="confirmDelete(project)">
-            🗑️ 
-          </button>
+          <button class="icon-btn view" (click)="openRecommendPopup(project.repository)">👁</button>
+          <button class="icon-btn view" (click)="viewDetails(project.repository)">📄</button>
+          <button class="icon-btn view" (click)="confirmDelete(project)">🗑️</button>
         </td>
       </tr>
     </tbody>
   </table>
 </div>
 
-<!-- Popup des developpeurs recommendes-->
+<!-- Popup des developpeurs recommendes -->
 <div class="popup-backdrop" *ngIf="showPopup">
   <div class="popup-card">
     <h2>Développeurs Recommandés</h2>
@@ -68,10 +62,18 @@
         <span class="tech-info">Langages: {{ dev.matched_technologies?.languages?.join(', ') || 'N/A' }}</span>
         <span class="tech-info">Frameworks: {{ dev.matched_technologies?.frameworks?.join(', ') || 'N/A' }}</span>
       </div>
-      <button class="assign-btn">Assigner</button>
+      <button class="assign-btn" (click)="assignDeveloper(dev.developer)">Assigner</button>
     </div>
 
     <button class="close-btn" (click)="closePopup()">Fermer</button>
+  </div>
+</div>
+
+<!-- Popup des developpeurs assignés -->
+<div class="popup-backdrop" *ngIf="showAssignmentPopup">
+  <div class="popup-card assignment-popup">
+    <p>{{ assignmentMessage }}</p>
+    <button class="close-btn" (click)="showAssignmentPopup = false">Fermer</button>
   </div>
 </div>
 
@@ -84,15 +86,12 @@
       <p>Aucun détail disponible.</p>
     </div>
 
-    <div *ngIf="selectedProject" class="project-details">
+    <div *ngIf="!isEditing && selectedProject" class="project-details">
       <p><strong>Nom du dépôt :</strong> {{ selectedProject.repository }}</p>
       <p><strong>Langages :</strong> {{ selectedProject.languages?.join(', ') || 'N/A' }}</p>
       <p><strong>Frameworks :</strong> {{ selectedProject.frameworks?.join(', ') || 'N/A' }}</p>
-      <p><strong>Outils :</strong> {{ selectedProject.tools?.join(', ') || 'N/A' }}</p>
       <p><strong>Fonctionnalités :</strong> {{ selectedProject.features?.join(', ') || 'N/A' }}</p>
       <p><strong>Domaine :</strong> {{ selectedProject.domain?.join(', ') || 'N/A' }}</p>
-      <p><strong>Sécurité :</strong> {{ selectedProject.security?.join(', ') || 'N/A' }}</p>
-      <p><strong>Base de données :</strong> {{ selectedProject.database?.join(', ') || 'Non spécifiée' }}</p>
       <p><strong>Résumé :</strong></p>
       <p [class.expanded]="showFullSummary" class="summary">
         {{ selectedProject.summary || 'Aucun résumé disponible.' }}
@@ -100,9 +99,51 @@
       <span class="toggle-summary-btn" (click)="showFullSummary = !showFullSummary">
         {{ showFullSummary ? 'Réduire' : 'Voir tout' }}
       </span>
+
+      <div class="assigned-devs" *ngIf="selectedProject.assigned_developers?.length > 0; else noAssigned">
+        <h3>Développeurs assignés</h3>
+        <ul>
+          <li *ngFor="let dev of selectedProject.assigned_developers; let i = index" class="assigned-dev-item">
+            <strong>{{ dev.author }}</strong>
+            <span *ngIf="dev.languages?.length"> - Langages: {{ dev.languages.join(', ') }}</span>
+            <span *ngIf="dev.frameworks?.length"> - Frameworks: {{ dev.frameworks.join(', ') }}</span>
+            <button class="remove-btn" (click)="removeAssignedDeveloper(dev.author)" title="Retirer ce développeur">×</button>
+          </li>
+        </ul>
+      </div>
+      <ng-template #noAssigned>
+        <p><em>Aucun développeur assigné.</em></p>
+      </ng-template>
+      
+
+      <div class="popup-actions">
+        <button class="submit-btn" (click)="startEdit()">Modifier</button>
+        <button class="close-btn" (click)="closeDetails()">Fermer</button>
+      </div>
     </div>
 
-    <button class="close-btn" (click)="closeDetails()">Fermer</button>
+    <!-- Formulaire de modification -->
+    <div *ngIf="isEditing" class="project-details edit-form">
+      <label>Langages</label>
+      <input type="text" [(ngModel)]="editProject.languagesInput" />
+
+      <label>Frameworks</label>
+      <input type="text" [(ngModel)]="editProject.frameworksInput" />
+
+      <label>Fonctionnalités</label>
+      <input type="text" [(ngModel)]="editProject.featuresInput" />
+
+      <label>Domaine</label>
+      <input type="text" [(ngModel)]="editProject.domainInput" />
+
+      <label>Résumé</label>
+      <textarea [(ngModel)]="editProject.summary" rows="4"></textarea>
+
+      <div class="popup-actions">
+        <button class="submit-btn" (click)="saveEdit()">Enregistrer</button>
+        <button class="close-btn" (click)="cancelEdit()">Annuler</button>
+      </div>
+    </div>
   </div>
 </div>
 
@@ -111,7 +152,7 @@
   <div class="popup-card">
     <h2>Confirmer la suppression</h2>
     <p>Voulez-vous vraiment supprimer le projet <strong>{{ projectToDelete.repository }}</strong> ?</p>
-    
+
     <div class="popup-actions">
       <button class="confirm-btn" (click)="deleteProject(projectToDelete)">Supprimer</button>
       <button class="cancel-btn" (click)="cancelDelete()">Annuler</button>
@@ -139,17 +180,48 @@
         <input type="text" name="frameworks" [(ngModel)]="newProject.frameworksInput" placeholder="Ex: flask, react" />
       </label>
 
-            <!-- Bouton upload personnalisé dans ta popup ajout -->
-      <label class="custom-file-upload">
-        <input type="file" (change)="onFileSelected($event)" required />
-        <span>📁 Choisir un fichier README</span>
+      <label>
+        Fonctionnalités (séparées par virgule) :
+        <input type="text" name="features" [(ngModel)]="newProject.featuresInput" placeholder="Ex: Auth, Upload, Search" />
       </label>
-      
+
+      <label>
+        Résumé du projet :
+        <textarea name="summary" [(ngModel)]="newProject.summary" rows="3" placeholder="Résumé du projet..."></textarea>
+      </label>
+
       <div class="popup-actions">
-        <button type="submit" [disabled]="!projectForm.form.valid || !selectedReadmeFile">Ajouter</button>
+        <button type="submit" [disabled]="!projectForm.form.valid">Ajouter</button>
         <button type="button" (click)="closeAddPopup()">Annuler</button>
       </div>
     </form>
   </div>
 </div>
 
+<!-- 📊 Section Graphiques -->
+<div class="charts-section">
+  <h3>📊 Statistiques des projets</h3>
+  <div class="chart-row">
+    <!-- Pie Chart Langages -->
+    <div class="chart-card">
+      <h4>Projets par Langages</h4>
+      <canvas baseChart
+        [data]="{
+          labels: pieChartLabels,
+          datasets: [{
+            data: pieChartData,
+            backgroundColor: ['#ff6384', '#36a2eb', '#cc65fe', '#ffce56', '#2ecc71'],
+            label: 'Projets par Langage'
+          }]
+        }"
+        [type]="pieChartType">
+      </canvas>
+    </div>
+
+    <!-- Deuxième chart vide pour maintenant -->
+    <div class="chart-card placeholder">
+      <h4>Autre Statistique</h4>
+      <p>À venir...</p>
+    </div>
+  </div>
+</div>

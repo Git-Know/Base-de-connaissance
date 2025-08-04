@@ -1,0 +1,50 @@
+<div class="top-bar">
+  <input type="text" [(ngModel)]="searchTerm" (ngModelChange)="onSearchChange()"
+    placeholder="🔍 Rechercher un développeur..." class="search-input" />
+  <!-- Tu peux ajouter un bouton pour ajouter un développeur si besoin -->
+</div>
+
+<div class="table-container" *ngIf="developers.length > 0; else noDev">
+  <table class="project-table">
+    <thead>
+      <tr>
+        <th>👤 Auteur</th>
+        <th>🧠 Langages</th>
+        <th>⚙️ Frameworks</th>
+        <th>📊 Contributions</th>
+      </tr>
+    </thead>
+    <tbody>
+      <tr *ngFor="let dev of filteredDevelopers; let i = index" [ngClass]="{ 'row-alt': i % 2 === 1 }">
+        <td><strong>{{ dev.author }}</strong></td>
+        <td>
+          <span *ngIf="dev.languages?.length; else noLang">
+            <span class="badge" *ngFor="let lang of dev.languages">{{ lang }}</span>
+          </span>
+          <ng-template #noLang><span class="badge neutral">Aucun</span></ng-template>
+        </td>
+        <td>
+          <span *ngIf="dev.frameworks?.length; else noFw">
+            <span class="badge secondary" *ngFor="let fw of dev.frameworks">{{ fw }}</span>
+          </span>
+          <ng-template #noFw><span class="badge neutral">Aucun</span></ng-template>
+        </td>
+      <td [style.color]="dev.available ? 'green' : 'red'">
+        {{ dev.available ? 'Disponible' : 'Occupé' }}
+      </td>
+
+      </tr>
+    </tbody>
+  </table>
+
+  <!-- Graphique des contributions -->
+  <div style="display: block; width: 100%; max-width: 800px; margin-top: 30px;">
+    <canvas baseChart [data]="barChartData" [labels]="barChartData.labels" [options]="barChartOptions"
+      [legend]="barChartLegend" [type]="barChartType">
+    </canvas>
+  </div>
+</div>
+
+<ng-template #noDev>
+  <p>Aucun développeur trouvé.</p>
+</ng-template>

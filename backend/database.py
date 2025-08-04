@@ -6,5 +6,6 @@ def get_collections():
     return {
         "projects": db["projects"],
         "contributors": db["contributors"],
-        "matching": db["matching"]
+        "matching": db["matching"],
+        "assignments": db["assignments"]
     }
