@@ -270,5 +270,32 @@ export class Projects {
       }
     });
   }
+
+  showSimilarModulesPopup = false;
+  similarModules: { technology: string, modules: any[] }[] = [];
+  selectedProjectForModules: any = null;
+
+  openSimilarModules(project: any) {
+    this.selectedProjectForModules = project;
+    this.showSimilarModulesPopup = true;
+    if (!this.selectedProjectForModules || !this.selectedProjectForModules.languages) return;
   
+    this.similarModules = [];
+  
+    this.projectService.getModulesByLanguages(this.selectedProjectForModules.languages).subscribe(
+      (data: any[]) => {
+        this.similarModules = data;
+      },
+      (error) => {
+        console.error("Erreur lors de la récupération des modules :", error);
+      }
+    );
+  }
+
+  closeSimilarModules() {
+    this.showSimilarModulesPopup = false;
+  }
+  
+  
+
 }

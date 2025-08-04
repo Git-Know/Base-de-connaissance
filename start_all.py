@@ -55,5 +55,5 @@ def run_consumer_script():
 if __name__ == "__main__":
     start_docker()
     wait_for_kafka()
-    # run_producer_script()
-    # run_consumer_script()
+    run_producer_script()
+    run_consumer_script()
