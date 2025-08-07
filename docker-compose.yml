@@ -2,18 +2,17 @@ version: '3.8'
 
 services:
 
-
   mongodb:
     image: mongo:6.0
     container_name: mongodb
     ports:
       - "27017:27017"
     volumes:
-     - ./mongo_data:/data/db
+      - ./mongo_data:/data/db
     networks:
       - kafka-net
     healthcheck:
-      test: ["CMD", "mongo", "--eval", "db.adminCommand('ping')"]
+      test: [ "CMD", "mongo", "--eval", "db.adminCommand('ping')" ]
       interval: 15s
       timeout: 10s
       retries: 5
@@ -73,8 +72,7 @@ services:
       retries: 5
       start_period: 30s
 
-
-#======================================== spark setup =====================================
+  #======================================== spark setup =====================================
 
   spark-master:
     image: bitnami/spark:3.5
@@ -116,41 +114,23 @@ services:
       retries: 5
       start_period: 30s
 
-  spark-notebook:
-    image: spark-notebook
-    container_name: spark-notebook
-    user: root
-    ports:
-      - "8888:8888"
-    volumes:
-      - ./spark/:/opt/spark-jobs
-    working_dir: /opt/spark-jobs
-    networks:
-      - kafka-net
-    healthcheck:
-      test: [ "CMD", "curl", "-f", "http://localhost:8888/lab" ]
-      interval: 10s
-      timeout: 5s
-      retries: 5
-      start_period: 30s
-      
-#======================================== NEO4J setup =====================================
+  #======================================== NEO4J setup =====================================
 
   neo4j:
     image: neo4j:latest
     container_name: neo4j
     volumes:
-        - ./neo4j/logs:/logs
-        - ./neo4j/config:/config
-        - ./neo4j/data:/data
-        - ./neo4j/plugins:/plugins
+      - ./neo4j/logs:/logs
+      - ./neo4j/config:/config
+      - ./neo4j/data:/data
+      - ./neo4j/plugins:/plugins
     environment:
-        - NEO4J_AUTH=neo4j/test12345678
+      - NEO4J_AUTH=neo4j/test12345678
     ports:
       - "7474:7474"
       - "7687:7687"
     healthcheck:
-      test: ["CMD", "cypher-shell", "-u", "neo4j", "-p", "test12345678", "RETURN 1;"]
+      test: [ "CMD", "cypher-shell", "-u", "neo4j", "-p", "test12345678", "RETURN 1;" ]
       interval: 10s
       timeout: 5s
       retries: 5
@@ -158,6 +138,7 @@ services:
     restart: unless-stopped
     networks:
       - kafka-net
+
 # ======================================== backend  =====================================
 
   backend:
@@ -179,6 +160,7 @@ services:
 volumes:
   kafka_data:
   mongo_data:
+
 
 networks:
   kafka-net:

@@ -118,16 +118,18 @@ def insert_developer_tech_edge(tx, record):
         last_commit=record["last_commit"],
         recent=bool(record.get("recent_contributor", False))
     )
-
-# --- Main loop ---
+# --- Main “run once” logic ---
 try:
     with driver.session() as session:
+        # give yourself up to 5 seconds of inactivity before quitting
+        NO_MSG_TIMEOUT = 5.0  
         while True:
-            msg = consumer.poll(1.0)
+            msg = consumer.poll(NO_MSG_TIMEOUT)
 
+            # if no message arrives in NO_MSG_TIMEOUT seconds, we assume queue is drained
             if msg is None:
-                logging.debug("No message received.")
-                continue
+                logging.info("No more messages; exiting consumer loop.")
+                break
 
             if msg.error():
                 logging.error(f"Kafka error: {msg.error()}")
@@ -158,8 +160,8 @@ try:
                 logging.exception(f"Unexpected error during processing: {e}")
 
 except KeyboardInterrupt:
-    logging.info("Kafka consumer stopped by user.")
+    logging.info("Interrupted by user.")
 finally:
     consumer.close()
     driver.close()
-    logging.info("Kafka consumer and Neo4j driver closed.")
+    logging.info("Consumer and Neo4j driver closed.")

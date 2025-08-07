@@ -2,7 +2,7 @@ from pymongo import MongoClient
 
 try:
     # Connexion à MongoDB sur le port 27018
-    client = MongoClient("mongodb://localhost:27018")
+    client = MongoClient("mongodb://localhost:27017/")
 
     # Sélection de la base et de la collection
     db = client["test_database"]

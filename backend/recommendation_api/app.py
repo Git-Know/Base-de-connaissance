@@ -246,7 +246,10 @@ def unassign_developer():
 
     return jsonify({"message": f"Developer '{developer_name}' removed from project '{repository}' and set available."}), 200
 
-
+@app.route("/developers", methods=["GET"])
+def get_all_developers():
+    developers = list(collections["contributors"].find({}, {"_id": 0}))
+    return jsonify(developers)
 #####################################################API Neo4j#####################################
 
 from flask_restx import Api, Resource, fields
