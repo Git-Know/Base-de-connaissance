@@ -1,9 +1,3 @@
-import re
-import spacy
-from transformers import pipeline
-import json
-import os
-
 def match_developer_to_project(developer, project):
     # Supporte "author" ou "author_name"
     dev_name = developer.get("author") or developer.get("author_name") or "unknown"
