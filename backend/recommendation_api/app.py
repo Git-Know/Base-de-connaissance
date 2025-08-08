@@ -368,4 +368,5 @@ class ModuleRecommendation(Resource):
             api.abort(500, f"Failed to retrieve module recommendations: {str(e)}")
 
 if __name__ == "__main__":
-    app.run(debug=True)
+    # app.run(debug=True)
+    app.run(host="0.0.0.0", port=5000, debug=True)
