@@ -79,6 +79,7 @@ if __name__ == "__main__":
     start_docker()
     wait_for_kafka()
     run_producer_script()
+
     run_spark_job()
     run_neo4j_consumer_script()
     run_consumer_script()
