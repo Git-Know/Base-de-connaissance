@@ -12,3 +12,17 @@ logs/
 *matched_results.json
 *grouped_contributors.json
 *frameworks_by_contributor.json
+# Terraform state files
+*.tfstate
+*.tfstate.*
+.terraform.tfstate.lock.info
+
+# Terraform generated files and directories
+.terraform/
+.terraformrc
+terraform.rc
+*.tfvars
+*.tfvars.json
+override.tf
+override.tf.json
+crash.log
