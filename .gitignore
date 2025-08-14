@@ -16,7 +16,7 @@ logs/
 *.tfstate
 *.tfstate.*
 .terraform.tfstate.lock.info
-
+.terraform.lock.hcl
 # Terraform generated files and directories
 .terraform/
 .terraformrc
