@@ -139,6 +139,22 @@ services:
     networks:
       - kafka-net
 
+  # ======================================== backend  =====================================
+
+  backend:
+    image: python:3.10-slim
+    container_name: backend
+    command: /bin/sh -c "pip install flask flask-cors pymongo neo4j flask_restx && python /app/recommendation_api/app.py"
+    volumes:
+      - ./backend:/app
+    ports:
+      - "5000:5000"
+    depends_on:
+      - mongodb
+      - neo4j
+    networks:
+      - kafka-net
+
 volumes:
   kafka_data:
   mongo_data:
