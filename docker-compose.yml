@@ -139,7 +139,7 @@ services:
     networks:
       - kafka-net
 
-# ======================================== backend  =====================================
+  # ======================================== backend  =====================================
 
   backend:
     image: python:3.10-slim
@@ -154,8 +154,6 @@ services:
       - neo4j
     networks:
       - kafka-net
-    
-
 
 volumes:
   kafka_data:
