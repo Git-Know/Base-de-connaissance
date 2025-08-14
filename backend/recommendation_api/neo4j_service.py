@@ -3,6 +3,7 @@ from typing import List, Dict, Any
 
 
 def initialize_neo4j_driver() -> Driver:
+    # localhost -> neo4j
     return GraphDatabase.driver("bolt://neo4j:7687", auth=("neo4j", "test12345678"))
 
 

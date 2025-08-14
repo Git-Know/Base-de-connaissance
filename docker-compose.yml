@@ -139,6 +139,7 @@ services:
     networks:
       - kafka-net
 
+
   localstack:
     container_name: "${LOCALSTACK_DOCKER_NAME:-localstack-main}"
     image: localstack/localstack
@@ -151,6 +152,25 @@ services:
     volumes:
       - "${LOCALSTACK_VOLUME_DIR:-./volume}:/var/lib/localstack"
       - "/var/run/docker.sock:/var/run/docker.sock"
+    networks:
+      - kafka-net      
+
+# ======================================== backend  =====================================
+
+  backend:
+    image: python:3.10-slim
+    container_name: backend
+    command: /bin/sh -c "pip install flask flask-cors pymongo neo4j flask_restx && python /app/recommendation_api/app.py"
+    volumes:
+      - ./backend:/app
+    ports:
+      - "5000:5000"
+    depends_on:
+      - mongodb
+      - neo4j
+    networks:
+      - kafka-net
+
 
 volumes:
   kafka_data:
