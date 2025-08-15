@@ -1,7 +1,7 @@
 
 variable "ami_id" {
   type    = string
-  default = "ami-0c02fb55956c7d316" # Ubuntu 20.04 (update if needed)
+  default = "ami-002e8d23bd2652396" # Ubuntu 20.04 (update if needed)
 }
 
 variable "instance_type" {

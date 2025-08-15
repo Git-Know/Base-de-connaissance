@@ -87,6 +87,29 @@ resource "aws_security_group" "frontend_sg" {
   }
 }
 
+
+# 8. Security Group for Bastion
+resource "aws_security_group" "bastion_sg" {
+  name        = "bastion-sg"
+  description = "Allow SSH access from anywhere"
+  vpc_id      = aws_vpc.main.id
+
+  ingress {
+    description = "Allow SSH from anywhere"
+    from_port   = 22
+    to_port     = 22
+    protocol    = "tcp"
+    cidr_blocks = ["0.0.0.0/0"]
+  }
+
+  egress {
+    from_port   = 0
+    to_port     = 0
+    protocol    = "-1"
+    cidr_blocks = ["0.0.0.0/0"]
+  }
+}
+
 # 7. Security Group for Back-end
 resource "aws_security_group" "backend_sg" {
   name        = "backend-sg"
@@ -94,11 +117,26 @@ resource "aws_security_group" "backend_sg" {
   vpc_id      = aws_vpc.main.id
 
   ingress {
-    description     = "Allow from frontend-sg"
+    description     = "Allow HTTP from frontend-sg"
     from_port       = 80
     to_port         = 80
     protocol        = "tcp"
     security_groups = [aws_security_group.frontend_sg.id]
+  }
+
+  ingress {
+    description     = "Allow SSH from bastion-sg"
+    from_port       = 22
+    to_port         = 22
+    protocol        = "tcp"
+    security_groups = [aws_security_group.bastion_sg.id]
+  }
+  ingress {
+    description = "Allow ping"
+    from_port   = -1
+    to_port     = -1
+    protocol    = "icmp"
+    cidr_blocks = ["0.0.0.0/0"]
   }
 
   egress {
