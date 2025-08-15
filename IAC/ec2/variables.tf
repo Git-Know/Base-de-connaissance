@@ -12,4 +12,12 @@ variable "instance_type" {
 variable "key_name" {
   type        = string
   description = "The name of your AWS key pair"
+  default     = "test-key"
+}
+variable "aws_subnet_id" {
+  type = string
+
+}
+variable "aws_security_group_backend_sg_id" {
+  type = string
 }

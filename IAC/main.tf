@@ -1,34 +1,13 @@
 provider "aws" {
-  region                      = "eu-west-3"
-  access_key                  = var.aws_access_key
-  secret_key                  = var.aws_secret_key
-  s3_force_path_style         = true
-  skip_credentials_validation = true
-  skip_metadata_api_check     = true
-  skip_requesting_account_id  = true
-
-  endpoints {
-    ec2 = var.ec2_endpoint
-    s3  = var.s3_endpoint
-  }
+  region = "eu-west-3"
 }
 
-variable "aws_access_key" {
-  type        = string
-  description = "AWS Access Key"
+module "network" {
+  source = "./network"
 }
 
-variable "aws_secret_key" {
-  type        = string
-  description = "AWS Secret Key"
-}
-
-variable "ec2_endpoint" {
-  type        = string
-  description = "Custom EC2 endpoint URL"
-}
-
-variable "s3_endpoint" {
-  type        = string
-  description = "Custom S3 endpoint URL"
+module "ec2" {
+  source                           = "./ec2"
+  aws_subnet_id                    = module.network.aws_private_subnet_id
+  aws_security_group_backend_sg_id = module.network.aws_security_group_backend_sg_id
 }
