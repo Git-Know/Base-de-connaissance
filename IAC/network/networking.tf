@@ -89,8 +89,8 @@ resource "aws_security_group" "frontend_sg" {
 
 
 # 8. Security Group for Bastion
-resource "aws_security_group" "bastion_sg" {
-  name        = "bastion-sg"
+resource "aws_security_group" "bastion_sg_new" {
+  name        = "bastion-sg-new"
   description = "Allow SSH access from anywhere"
   vpc_id      = aws_vpc.main.id
 
@@ -102,6 +102,14 @@ resource "aws_security_group" "bastion_sg" {
     cidr_blocks = ["0.0.0.0/0"]
   }
 
+  ingress {
+    description = "Allow API tunnel traffic (port 5000)"
+    from_port   = 5000
+    to_port     = 5000
+    protocol    = "tcp"
+    cidr_blocks = ["0.0.0.0/0"] # 🌍 open to everyone for prototyping
+  }
+
   egress {
     from_port   = 0
     to_port     = 0
@@ -109,6 +117,7 @@ resource "aws_security_group" "bastion_sg" {
     cidr_blocks = ["0.0.0.0/0"]
   }
 }
+
 
 # 7. Security Group for Back-end
 resource "aws_security_group" "backend_sg" {
@@ -125,12 +134,13 @@ resource "aws_security_group" "backend_sg" {
   }
 
   ingress {
-    description     = "Allow SSH from bastion-sg"
-    from_port       = 22
-    to_port         = 22
+    description     = "Allow all TCP traffic from bastion"
+    from_port       = 0
+    to_port         = 65535
     protocol        = "tcp"
-    security_groups = [aws_security_group.bastion_sg.id]
+    security_groups = [aws_security_group.bastion_sg_new.id]
   }
+
   ingress {
     description = "Allow ping"
     from_port   = -1
@@ -146,3 +156,40 @@ resource "aws_security_group" "backend_sg" {
     cidr_blocks = ["0.0.0.0/0"]
   }
 }
+# # 9. Elastic IP for NAT Gateway
+# resource "aws_eip" "nat_eip" {
+
+#   depends_on = [aws_internet_gateway.igw]
+# }
+
+# # 10. NAT Gateway in the public subnet
+# resource "aws_nat_gateway" "nat" {
+#   allocation_id = aws_eip.nat_eip.id
+#   subnet_id     = aws_subnet.public.id
+
+#   tags = {
+#     Name = "private-nat-gateway"
+#   }
+
+#   depends_on = [aws_internet_gateway.igw]
+# }
+
+# # 11. Route table for private subnet
+# resource "aws_route_table" "private" {
+#   vpc_id = aws_vpc.main.id
+
+#   route {
+#     cidr_block     = "0.0.0.0/0"
+#     nat_gateway_id = aws_nat_gateway.nat.id
+#   }
+
+#   tags = {
+#     Name = "private-rt"
+#   }
+# }
+
+# # 12. Associate private subnet with its route table
+# resource "aws_route_table_association" "private_assoc" {
+#   subnet_id      = aws_subnet.private.id
+#   route_table_id = aws_route_table.private.id
+# }

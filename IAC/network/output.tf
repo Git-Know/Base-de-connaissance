@@ -11,5 +11,5 @@ output "aws_public_subnet_id" {
   value = aws_subnet.public.id
 }
 output "aws_security_group_bastion_sg_id" {
-  value = aws_security_group.bastion_sg.id
+  value = aws_security_group.bastion_sg_new.id
 }

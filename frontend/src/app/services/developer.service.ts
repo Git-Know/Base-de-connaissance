@@ -7,9 +7,9 @@ import { Observable } from 'rxjs';
   providedIn: 'root'
 })
 export class DeveloperService {
-  private apiUrl = 'http://localhost:5000/developers';
+  private apiUrl = 'http://13.39.112.121/:5000/developers';
 
-  constructor(private http: HttpClient) {}
+  constructor(private http: HttpClient) { }
 
   getAllDevelopers(): Observable<Developer[]> {
     return this.http.get<Developer[]>(this.apiUrl);

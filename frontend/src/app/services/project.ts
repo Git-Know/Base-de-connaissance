@@ -8,7 +8,7 @@ import { Project } from '../models/Project';
 })
 export class ProjectService {
 
-  private apiUrl = 'http://localhost:5000/projects'; 
+  private apiUrl = 'http://13.39.112.121:5000/projects';
 
   constructor(private http: HttpClient) { }
 
@@ -29,7 +29,7 @@ export class ProjectService {
   }
 
   addProject(project: any): Observable<any> {
-    return this.http.post(`${this.apiUrl}/add`, project);  
+    return this.http.post(`${this.apiUrl}/add`, project);
   }
 
   updateProject(repoName: string, projectData: any) {
@@ -48,7 +48,7 @@ export class ProjectService {
     const body = { developer, repository };
     return this.http.post(`${this.apiUrl}/assign`, body);
   }
-  
+
   unassignDeveloper(developer: string, repository: string): Observable<any> {
     const body = { developer, repository };
     return this.http.post(`${this.apiUrl}/unassign`, body);
@@ -56,13 +56,13 @@ export class ProjectService {
 
   getModulesByLanguages(technologies: string[]) {
     const body = {
-      technologies: technologies 
+      technologies: technologies
     };
     return this.http.post<any[]>(
-      'http://localhost:5000/recommend/modules',
+      'http://13.39.112.121:5000/recommend/modules',
       body
     );
   }
-  
-  
+
+
 }

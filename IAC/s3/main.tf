@@ -130,3 +130,32 @@ resource "aws_s3_bucket_cors_configuration" "angular_bucket_cors" {
 output "website_url" {
   value = aws_s3_bucket.angular_bucket.website_endpoint
 }
+resource "aws_s3_bucket_object" "angular_index" {
+  bucket       = aws_s3_bucket.angular_bucket.id
+  key          = "index.html"
+  source       = "../frontend/dist/frontend/browser/index.html"
+  acl          = "public-read"
+  content_type = "text/html"
+}
+resource "aws_s3_bucket_object" "angular_files" {
+  for_each = fileset("../frontend/dist/frontend/browser", "**/*") # recursively all files
+  bucket   = aws_s3_bucket.angular_bucket.id
+  key      = each.value
+  source   = "../frontend/dist/frontend/browser/${each.value}"
+  acl      = "public-read"
+  # set MIME type based on file extension
+  content_type = lookup({
+    "js"    = "application/javascript",
+    "css"   = "text/css",
+    "json"  = "application/json",
+    "ico"   = "image/x-icon",
+    "png"   = "image/png",
+    "jpg"   = "image/jpeg",
+    "svg"   = "image/svg+xml",
+    "woff2" = "font/woff2"
+    },
+    element(split(".", each.value), length(split(".", each.value)) - 1),
+    "application/octet-stream"
+  )
+
+}

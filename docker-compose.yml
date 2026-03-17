@@ -91,7 +91,7 @@ services:
       timeout: 5s
       retries: 5
       start_period: 30s
-
+    volumes: -./spark:/opt/bitnami/spark/work
   spark-worker-1:
     image: bitnami/spark:3.5
     container_name: spark-worker-1
